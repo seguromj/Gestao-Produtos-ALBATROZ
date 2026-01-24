@@ -1,5 +1,7 @@
 
 
+
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -373,6 +375,23 @@
             background: #444;
             color: white;
         }
+
+        /* ESTILO PARA A TABELA DE HISTORICO */
+        .tabela-vendas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .tabela-vendas th, .tabela-vendas td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        .tabela-vendas th {
+            background: #222;
+            color: var(--warning);
+        }
     </style>
 </head>
 <body>
@@ -391,7 +410,7 @@
             
             <button class="btn-main btn-blue" onclick="abrirSist()">ENTRAR NO SISTEMA</button>
             <button class="btn-main btn-orange" onclick="abrirCadastro()">🛍️ CADASTRAR PRODUTOS</button>
-            <button class="btn-main btn-green" onclick="abrirGerador()">GERAR CÓDIGO</button>
+            <button class="btn-main btn-green" onclick="abrirHistoricoVendas()">📊 HISTÓRICO DE VENDAS</button>
             <a class="btn-main btn-laranja" href="Botao-Admin.html" target="_self">Admin</a>
             <a class="btn-main btn-laranja" href="Codigo-Barra-QR.html" target="_self">Gerar Baras ou QR</a>
         </div>
@@ -455,18 +474,29 @@
     <div id="modalGen" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
         <div style="display:flex; flex-direction:column; align-items:center; gap:20px;">
-            <h2>Gerar Novo ID</h2>
+            <h2>Histórico de Vendas / Baixas</h2>
             
-            <div style="width: 80%; display: flex; flex-direction: column; gap: 10px;">
-                <input type="number" id="qtdDigitos" placeholder="Qtd de números no ID (ex: 8)" style="padding:12px; border-radius:8px; border:none;">
-                <button class="btn-main btn-blue" onclick="gerarIdAleatorio()" style="padding:15px; font-size: 14px;">GERAR NÚMERO ALEATÓRIO</button>
+            <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--success);">
+                <span style="font-size: 14px; color: #aaa;">LUCRO TOTAL DE VENDAS:</span><br>
+                <span id="valor-lucro-total" style="font-size: 24px; font-weight: bold; color: var(--success);">R$ 0,00</span>
             </div>
 
-            <input type="number" id="numID" style="width:80%; padding:18px; font-size:20px; border-radius:12px; border:none;" placeholder="ID Gerado aparecerá aqui">
-            <button class="btn-main btn-green" onclick="criarBarras()">GERAR BARRAS</button>
-            <div style="background: white; padding: 20px; border-radius: 10px;">
-                <svg id="barcode"></svg>
+            <div style="width: 100%; overflow-x: auto;">
+                <table class="tabela-vendas">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Produto</th>
+                            <th>Qtd</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpo-tabela-vendas">
+                        </tbody>
+                </table>
             </div>
+            
+            <button class="btn-delete" style="width: 100%; padding: 10px;" onclick="limparHistoricoVendas()">LIMPAR HISTÓRICO</button>
         </div>
     </div>
 
@@ -546,6 +576,7 @@
         let currentCamIndex = 0;
         let historico = JSON.parse(localStorage.getItem('meu_historico')) || [];
         let produtos = JSON.parse(localStorage.getItem('meus_produtos')) || [];
+        let vendasRealizadas = JSON.parse(localStorage.getItem('historico_vendas')) || [];
         let aguardandoReset = false;
         let valorTotalVenda = 0;
         
@@ -814,6 +845,16 @@
             if(pIndex !== -1) {
                 if(produtos[pIndex].qtd >= qtdBaixa) {
                     produtos[pIndex].qtd -= qtdBaixa;
+                    
+                    // REGISTRAR NO HISTÓRICO DE VENDAS
+                    vendasRealizadas.unshift({
+                        data: new Date().toLocaleString(),
+                        nome: produtos[pIndex].nome || "Produto",
+                        qtd: qtdBaixa,
+                        valorTotal: produtos[pIndex].valor * qtdBaixa
+                    });
+                    localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+
                     localStorage.setItem('meus_produtos', JSON.stringify(produtos));
                     alert(`Baixa de ${qtdBaixa} unidades no ID ${id} realizada!`);
                     renderizarCatalogo();
@@ -834,9 +875,18 @@
                 const pIndex = produtos.findIndex(p => p.id === item.id);
                 if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
                     produtos[pIndex].qtd -= qtdBaixa;
+
+                    // REGISTRAR NO HISTÓRICO DE VENDAS
+                    vendasRealizadas.unshift({
+                        data: new Date().toLocaleString(),
+                        nome: produtos[pIndex].nome || "Produto",
+                        qtd: qtdBaixa,
+                        valorTotal: produtos[pIndex].valor * qtdBaixa
+                    });
                 }
             });
             
+            localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
             localStorage.setItem('meus_produtos', JSON.stringify(produtos));
             historico = [];
             localStorage.setItem('meu_historico', JSON.stringify(historico));
@@ -860,6 +910,42 @@
             document.getElementById('home').style.display = 'none';
         }
 
+        // --- FUNÇÃO PARA O NOVO BOTÃO DE HISTÓRICO ---
+        function abrirHistoricoVendas() {
+            document.getElementById('modalGen').style.display = 'flex';
+            document.getElementById('home').style.display = 'none';
+            renderizarHistoricoVendas();
+        }
+
+        function renderizarHistoricoVendas() {
+            const corpoTabela = document.getElementById('corpo-tabela-vendas');
+            const displayLucro = document.getElementById('valor-lucro-total');
+            corpoTabela.innerHTML = "";
+            let lucroTotal = 0;
+
+            vendasRealizadas.forEach(v => {
+                lucroTotal += parseFloat(v.valorTotal);
+                corpoTabela.innerHTML += `
+                    <tr>
+                        <td>${v.data}</td>
+                        <td>${v.nome}</td>
+                        <td>${v.qtd}</td>
+                        <td style="color:var(--success)">R$ ${parseFloat(v.valorTotal).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            displayLucro.innerText = `R$ ${lucroTotal.toFixed(2)}`;
+        }
+
+        function limparHistoricoVendas() {
+            if(confirm("Deseja apagar todo o histórico de lucro e vendas?")) {
+                vendasRealizadas = [];
+                localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+                renderizarHistoricoVendas();
+            }
+        }
+
         function fecharTudo() {
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
             document.getElementById('home').style.display = 'flex';
@@ -869,46 +955,11 @@
             atualizarVisualizacaoHome(); // Garante que a home esteja atualizada ao fechar modais
         }
 
-        function criarBarras() {
-            const v = document.getElementById('numID').value;
-            if(v.length > 0) {
-                JsBarcode("#barcode", v, { 
-                    format: "CODE128", 
-                    displayValue: true, 
-                    fontSize: 22,
-                    width: 2,
-                    height: 100, 
-                    flat: true,  
-                    fontOptions: "bold"
-                });
-            }
-        }
-
-        function gerarIdAleatorio() {
-            const qtd = parseInt(document.getElementById('qtdDigitos').value);
-            if(!qtd || qtd <= 0) {
-                alert("Informe a quantidade de números desejada.");
-                return;
-            }
-
-            let novoId = "";
-            let tentativa = 0;
-            
-            do {
-                novoId = "";
-                for(let i=0; i<qtd; i++) {
-                    novoId += Math.floor(Math.random() * 10).toString();
-                }
-                tentativa++;
-            } while (produtos.some(p => p.id === novoId) && tentativa < 100);
-
-            document.getElementById('numID').value = novoId;
-        }
-
         function exportarDados() {
             const dados = {
                 produtos: produtos,
-                historico: historico
+                historico: historico,
+                vendas: vendasRealizadas
             };
             const blob = new Blob([JSON.stringify(dados)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -929,8 +980,10 @@
                     if (dados.produtos) {
                         produtos = dados.produtos;
                         historico = dados.historico || [];
+                        vendasRealizadas = dados.vendas || [];
                         localStorage.setItem('meus_produtos', JSON.stringify(produtos));
                         localStorage.setItem('meu_historico', JSON.stringify(historico));
+                        localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                         renderizarCatalogo();
                         atualizarVisualizacaoHome(); // Sincroniza a home
                         alert("Dados importados com sucesso!");
@@ -944,6 +997,4 @@
     </script>
 </body>
 </html>
-
-
 
