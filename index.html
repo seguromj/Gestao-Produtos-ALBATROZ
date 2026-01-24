@@ -415,6 +415,21 @@
         }
         .dash-card h4 { margin: 0 0 5px 0; font-size: 12px; color: #aaa; }
         .dash-card p { margin: 0; font-size: 16px; font-weight: bold; color: var(--success); }
+
+        /* Estilo do campo de busca */
+        .busca-container {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .busca-container input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--warning);
+            background: #222;
+            color: white;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -491,6 +506,10 @@
                 <button class="btn-backup" onclick="document.getElementById('input-import').click()">📥 IMPORTAR DADOS</button>
                 <input type="file" id="input-import" style="display:none" accept=".json" onchange="importarDados(event)">
             </div>
+        </div>
+
+        <div class="busca-container">
+            <input type="text" id="busca-id" placeholder="🔍 Buscar produto por ID..." oninput="renderizarCatalogo()">
         </div>
 
         <div class="grid-produtos" id="grid-produtos"></div>
@@ -738,14 +757,19 @@
 
         function renderizarCatalogo() {
             const grid = document.getElementById('grid-produtos');
+            const termoBusca = document.getElementById('busca-id').value.toLowerCase();
             grid.innerHTML = "";
+            
             produtos.forEach((p, i) => {
-                grid.innerHTML += `<div class="produto-card">
-                    <button class="btn-edit-prod" onclick="editarProduto(${i})">✏️</button>
-                    <button class="btn-del-prod" onclick="excluirProdutoPermanente(${i})">X</button>
-                    <img src="${p.img}"><div class="produto-info"><b>${p.nome || 'Sem Nome'}</b><br>
-                    <small>ID: ${p.id}</small><br>R$ ${p.valor}<br>
-                    <span style="color:var(--success)">Estoque: ${p.qtd}</span></div></div>`;
+                // Lógica de busca pelo ID
+                if (termoBusca === "" || p.id.toLowerCase().includes(termoBusca)) {
+                    grid.innerHTML += `<div class="produto-card">
+                        <button class="btn-edit-prod" onclick="editarProduto(${i})">✏️</button>
+                        <button class="btn-del-prod" onclick="excluirProdutoPermanente(${i})">X</button>
+                        <img src="${p.img}"><div class="produto-info"><b>${p.nome || 'Sem Nome'}</b><br>
+                        <small>ID: ${p.id}</small><br>R$ ${p.valor}<br>
+                        <span style="color:var(--success)">Estoque: ${p.qtd}</span></div></div>`;
+                }
             });
         }
 
@@ -912,5 +936,4 @@
     </script>
 </body>
 </html>
-
 
