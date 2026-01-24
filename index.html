@@ -1,8 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 
 <link rel="manifest" href="manifest.json">
 <script>
@@ -12,6 +14,7 @@
   }
 </script>
 
+    
     <title>Sistema Albatroz</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -39,6 +42,7 @@
             min-height: 100vh;
         }
 
+        /* --- NOVOS ESTILOS PARA ORGANIZAÇÃO E VISUALIZAÇÃO --- */
         .container-topo {
             width: 90%;
             max-width: 400px;
@@ -85,6 +89,7 @@
             from { box-shadow: 0 0 0px var(--danger); }
             to { box-shadow: 0 0 10px var(--danger); background: #421010; }
         }
+        /* --------------------------------------------------- */
 
         .menu-principal {
             display: flex;
@@ -333,6 +338,7 @@
             font-size: 16px;
         }
 
+        /* Aviso Flutuante */
         #aviso-erro {
             position: fixed;
             top: 20%;
@@ -367,6 +373,7 @@
             color: white;
         }
 
+        /* ESTILO PARA A TABELA DE HISTORICO */
         .tabela-vendas {
             width: 100%;
             border-collapse: collapse;
@@ -413,6 +420,7 @@
 <body>
 
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/766/766-preview.mp3"></audio>
+
     <div id="aviso-erro">PRODUTO NÃO EXISTE</div>
 
     <div class="container-topo" id="home">
@@ -472,8 +480,7 @@
         <div class="form-cadastro">
             <h3 style="margin:0">Cadastrar/Editar</h3>
             <input type="hidden" id="edit-index">
-            <input type="text" id="p-nome" placeholder="Nome do Produto"> 
-            <input type="text" id="p-id" placeholder="ID do Produto">
+            <input type="text" id="p-nome" placeholder="Nome do Produto"> <input type="text" id="p-id" placeholder="ID do Produto">
             <input type="text" id="p-img" placeholder="Link da Imagem">
             <input type="number" id="p-valor" placeholder="Valor (R$)">
             <input type="number" id="p-qtd" placeholder="Quantidade em Estoque">
@@ -492,19 +499,19 @@
     <div id="modalGen" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
         <div style="display:flex; flex-direction:column; align-items:center; gap:20px;">
-            <h2>Histórico de Vendas / Baixas</h2>
+            <h2>Dashboard e Histórico</h2>
             
             <div class="dashboard-grid">
                 <div class="dash-card">
-                    <h4>PIX</h4>
+                    <h4>PIX HOJE</h4>
                     <p id="dash-pix">R$ 0,00</p>
                 </div>
                 <div class="dash-card">
-                    <h4>DINHEIRO</h4>
+                    <h4>DINHEIRO HOJE</h4>
                     <p id="dash-dinheiro">R$ 0,00</p>
                 </div>
                 <div class="dash-card">
-                    <h4>CARTÃO</h4>
+                    <h4>CARTÃO HOJE</h4>
                     <p id="dash-cartao">R$ 0,00</p>
                 </div>
                 <div class="dash-card">
@@ -513,9 +520,14 @@
                 </div>
             </div>
 
-            <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--success);">
-                <span style="font-size: 14px; color: #aaa;">LUCRO TOTAL DE VENDAS:</span><br>
-                <span id="valor-lucro-total" style="font-size: 24px; font-weight: bold; color: var(--success);">R$ 0,00</span>
+            <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning);">
+                <span style="font-size: 14px; color: #aaa;">LUCRO NAS ÚLTIMAS 24H:</span><br>
+                <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span>
+            </div>
+
+            <div id="resumo-lucro-total" style="width: 100%; text-align: center; background: #222; padding: 10px; border-radius: 10px; border: 1px solid var(--success); margin-top: -10px;">
+                <span style="font-size: 12px; color: #aaa;">LUCRO TOTAL ACUMULADO:</span><br>
+                <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span>
             </div>
 
             <div style="width: 100%; overflow-x: auto;">
@@ -547,6 +559,7 @@
         let aguardandoReset = false;
         let valorTotalVenda = 0;
         
+        let barcodeBuffer = "";
         window.addEventListener("keydown", (e) => {
             if (document.getElementById('modalSist').style.display === 'flex') {
                 if (document.activeElement.id === 'valor-recebido') return;
@@ -562,9 +575,7 @@
                         barcodeBuffer = "";
                     }
                 } else {
-                    if (e.key.length === 1) {
-                        barcodeBuffer += e.key;
-                    }
+                    if (e.key.length === 1) barcodeBuffer += e.key;
                 }
                 setTimeout(() => { barcodeBuffer = ""; }, 200);
             }
@@ -586,7 +597,10 @@
                 const div = document.createElement('div');
                 div.className = 'card-disponivel';
                 if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
-                div.innerHTML = `<span>${p.nome || 'Sem Nome'}</span><span style="color:var(--warning)">Qtd: ${p.qtd}</span>`;
+                div.innerHTML = `
+                    <span style="font-weight:bold">${p.nome || 'Sem Nome'}</span>
+                    <span style="color:var(--warning)">Qtd: ${p.qtd}</span>
+                `;
                 container.appendChild(div);
             });
         }
@@ -635,7 +649,7 @@
                 nome: produtoEncontrado ? (produtoEncontrado.nome || "Produto Localizado") : "ID Não Cadastrado",
                 img: produtoEncontrado ? produtoEncontrado.img : "https://via.placeholder.com/50",
                 valor: produtoEncontrado ? produtoEncontrado.valor : 0,
-                timestamp: new Date().toLocaleTimeString()
+                timestamp: new Date().getTime() // SALVANDO TIMESTAMP PARA CALCULO 24H
             };
             historico.unshift(itemObj);
             localStorage.setItem('meu_historico', JSON.stringify(historico));
@@ -665,7 +679,10 @@
                 div.innerHTML = `
                     <div style="display:flex; align-items:center; gap:8px">
                         <img src="${item.img}" style="width:30px; height:30px; border-radius:4px; object-fit:cover">
-                        <div><span class="id-text">${item.id}</span><br><small style="font-size:10px; color:#aaa">${item.nome}</small></div>
+                        <div>
+                            <span class="id-text">${item.id}</span><br>
+                            <small style="font-size:10px; color:#aaa">${item.nome} | R$ ${valorItem.toFixed(2)}</small>
+                        </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:5px">
                         <div class="baixa-container">
@@ -687,6 +704,7 @@
             const troco = recebido - valorTotalVenda;
             const displayTroco = document.getElementById('texto-troco');
             displayTroco.innerText = `Troco: R$ ${recebido > 0 && troco >= 0 ? troco.toFixed(2) : "0,00"}`;
+            displayTroco.style.color = troco < 0 ? "var(--danger)" : "var(--success)";
         }
 
         function removerItem(index) {
@@ -711,7 +729,7 @@
                 qtd: parseInt(document.getElementById('p-qtd').value) || 0
             };
             if(index === "") produtos.push(p);
-            else produtos[index] = p;
+            else { produtos[index] = p; document.getElementById('edit-index').value = ""; }
             localStorage.setItem('meus_produtos', JSON.stringify(produtos));
             limparFormProd();
             renderizarCatalogo();
@@ -722,14 +740,12 @@
             const grid = document.getElementById('grid-produtos');
             grid.innerHTML = "";
             produtos.forEach((p, i) => {
-                grid.innerHTML += `
-                    <div class="produto-card">
-                        <button class="btn-edit-prod" onclick="editarProduto(${i})">✏️</button>
-                        <button class="btn-del-prod" onclick="excluirProdutoPermanente(${i})">X</button>
-                        <img src="${p.img}">
-                        <div class="produto-info"><b>${p.nome || 'Sem Nome'}</b><br>R$ ${p.valor}<br><span style="color:var(--success)">Estoque: ${p.qtd}</span></div>
-                    </div>
-                `;
+                grid.innerHTML += `<div class="produto-card">
+                    <button class="btn-edit-prod" onclick="editarProduto(${i})">✏️</button>
+                    <button class="btn-del-prod" onclick="excluirProdutoPermanente(${i})">X</button>
+                    <img src="${p.img}"><div class="produto-info"><b>${p.nome || 'Sem Nome'}</b><br>
+                    <small>ID: ${p.id}</small><br>R$ ${p.valor}<br>
+                    <span style="color:var(--success)">Estoque: ${p.qtd}</span></div></div>`;
             });
         }
 
@@ -744,7 +760,7 @@
         }
 
         function excluirProdutoPermanente(i) {
-            if(confirm("Deseja excluir este produto permanentemente?")) {
+            if(confirm("Deseja excluir este produto?")) {
                 produtos.splice(i, 1);
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
                 renderizarCatalogo();
@@ -760,6 +776,7 @@
                 produtos[pIndex].qtd -= qtdBaixa;
                 vendasRealizadas.unshift({
                     data: new Date().toLocaleString(),
+                    timestamp: new Date().getTime(),
                     nome: produtos[pIndex].nome || "Produto",
                     qtd: qtdBaixa,
                     tipo: metodo,
@@ -768,12 +785,13 @@
                 localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
                 alert("Baixa realizada!");
+                renderizarCatalogo();
                 atualizarVisualizacaoHome();
-            } else alert("Erro na baixa!");
+            } else alert("Estoque insuficiente!");
         }
 
         function baixaGeral() {
-            if(!confirm("Baixa em tudo?")) return;
+            if(!confirm("Deseja dar baixa geral?")) return;
             const metodo = document.getElementById('metodo-pagamento').value;
             historico.forEach((item, index) => {
                 const qtdBaixa = parseInt(document.getElementById(`baixa-${index}`).value);
@@ -782,6 +800,7 @@
                     produtos[pIndex].qtd -= qtdBaixa;
                     vendasRealizadas.unshift({
                         data: new Date().toLocaleString(),
+                        timestamp: new Date().getTime(),
                         nome: produtos[pIndex].nome || "Produto",
                         qtd: qtdBaixa,
                         tipo: metodo,
@@ -793,9 +812,18 @@
             localStorage.setItem('meus_produtos', JSON.stringify(produtos));
             historico = [];
             localStorage.setItem('meu_historico', JSON.stringify(historico));
+            document.getElementById('valor-recebido').value = "";
             atualizarLista();
             atualizarVisualizacaoHome();
-            alert("Venda concluída!");
+            alert("Baixa geral concluída!");
+        }
+
+        function limparFormProd() {
+            document.getElementById('p-nome').value = "";
+            document.getElementById('p-id').value = "";
+            document.getElementById('p-img').value = "";
+            document.getElementById('p-valor').value = "";
+            document.getElementById('p-qtd').value = "";
         }
 
         function abrirHistoricoVendas() {
@@ -806,77 +834,83 @@
 
         function renderizarHistoricoVendas() {
             const corpoTabela = document.getElementById('corpo-tabela-vendas');
-            const displayLucro = document.getElementById('valor-lucro-total');
+            const displayLucroDia = document.getElementById('valor-lucro-dia');
+            const displayLucroTotal = document.getElementById('valor-lucro-total');
             corpoTabela.innerHTML = "";
-            let lucroTotal = 0, totPix = 0, totDinheiro = 0, totCartao = 0;
+            
+            let lucroTotal = 0;
+            let lucroDia = 0;
+            let totPix = 0;
+            let totDinheiro = 0;
+            let totCartao = 0;
             let contagemProdutos = {};
+
+            const agora = new Date().getTime();
+            const vinteQuatroHoras = 24 * 60 * 60 * 1000;
 
             vendasRealizadas.forEach(v => {
                 const valor = parseFloat(v.valorTotal);
                 lucroTotal += valor;
-                if(v.tipo === "Pix") totPix += valor;
-                else if(v.tipo === "Dinheiro") totDinheiro += valor;
-                else if(v.tipo === "Cartão") totCartao += valor;
+                
+                // LOGICA 24 HORAS
+                if (agora - v.timestamp < vinteQuatroHoras) {
+                    lucroDia += valor;
+                    if(v.tipo === "Pix") totPix += valor;
+                    else if(v.tipo === "Dinheiro") totDinheiro += valor;
+                    else if(v.tipo === "Cartão") totCartao += valor;
+                }
+
                 contagemProdutos[v.nome] = (contagemProdutos[v.nome] || 0) + v.qtd;
-                corpoTabela.innerHTML += `<tr><td>${v.data.split(' ')[0]}</td><td>${v.nome}</td><td>${v.qtd}</td><td>${v.tipo}</td><td style="color:var(--success)">R$ ${valor.toFixed(2)}</td></tr>`;
+                corpoTabela.innerHTML += `<tr><td>${v.data.split(',')[0]}</td><td>${v.nome}</td><td>${v.qtd}</td><td>${v.tipo}</td><td style="color:var(--success)">R$ ${valor.toFixed(2)}</td></tr>`;
             });
 
             document.getElementById('dash-pix').innerText = `R$ ${totPix.toFixed(2)}`;
             document.getElementById('dash-dinheiro').innerText = `R$ ${totDinheiro.toFixed(2)}`;
             document.getElementById('dash-cartao').innerText = `R$ ${totCartao.toFixed(2)}`;
+            
             let topProd = Object.keys(contagemProdutos).reduce((a, b) => contagemProdutos[a] > contagemProdutos[b] ? a : b, "---");
             document.getElementById('dash-top').innerText = topProd;
-            displayLucro.innerText = `R$ ${lucroTotal.toFixed(2)}`;
+
+            displayLucroDia.innerText = `R$ ${lucroDia.toFixed(2)}`;
+            displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
         }
 
         function limparHistoricoVendasComSenha() {
-            const user = prompt("ID de Usuário:");
-            const pass = prompt("Senha:");
-            if(user === "admin" && pass === "1234") {
-                if(confirm("Apagar histórico?")) {
-                    vendasRealizadas = [];
-                    localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
-                    renderizarHistoricoVendas();
-                }
-            } else alert("Erro!");
+            if(prompt("Digite a senha:") === "1234") {
+                vendasRealizadas = [];
+                localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+                renderizarHistoricoVendas();
+            }
         }
 
         function fecharTudo() {
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
             document.getElementById('home').style.display = 'flex';
-            if (scanner) scanner.stop().catch(() => {});
-            atualizarVisualizacaoHome();
-        }
-
-        function limparFormProd() {
-            document.querySelectorAll('.form-cadastro input').forEach(i => i.value = "");
+            if (scanner) scanner.stop();
         }
 
         function exportarDados() {
-            const dados = { produtos, historico, vendas: vendasRealizadas };
-            const blob = new Blob([JSON.stringify(dados)], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
+            const blob = new Blob([JSON.stringify({produtos, historico, vendas: vendasRealizadas})], {type: 'application/json'});
             const a = document.createElement('a');
-            a.href = url; a.download = 'backup_albatroz.json'; a.click();
+            a.href = URL.createObjectURL(blob);
+            a.download = 'backup_estoque.json';
+            a.click();
         }
 
         function importarDados(event) {
-            const file = event.target.files[0];
-            if (!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dados = JSON.parse(e.target.result);
-                produtos = dados.produtos || [];
-                vendasRealizadas = dados.vendas || [];
+                produtos = dados.produtos;
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
-                localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 renderizarCatalogo();
                 atualizarVisualizacaoHome();
                 alert("Importado!");
             };
-            reader.readAsText(file);
+            reader.readAsText(event.target.files[0]);
         }
     </script>
 </body>
 </html>
+
 
