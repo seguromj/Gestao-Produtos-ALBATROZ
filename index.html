@@ -1,7 +1,5 @@
 
 
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -392,6 +390,33 @@
             background: #222;
             color: var(--warning);
         }
+
+        /* ESTILOS OPÇÃO 1 E 5 */
+        .select-metodo {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--primary);
+            background: #222;
+            color: white;
+            font-size: 14px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .dash-card {
+            background: #222;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+        .dash-card h4 { margin: 0 0 5px 0; font-size: 12px; color: #aaa; }
+        .dash-card p { margin: 0; font-size: 16px; font-weight: bold; color: var(--success); }
     </style>
 </head>
 <body>
@@ -408,7 +433,7 @@
         <div class="menu-principal">
             <h1 style="text-align:center; margin: 10px 0;">🦅 Sistema Albatroz 🦅</h1>
             
-            <button class="btn-main btn-blue" onclick="abrirSist()">ENTRAR NO SISTEMA</button>
+            <button class="btn-main btn-blue" onclick="abrirSistComSenha()">ENTRAR NO SISTEMA</button>
             <button class="btn-main btn-orange" onclick="abrirCadastro()">🛍️ CADASTRAR PRODUTOS</button>
             <button class="btn-main btn-green" onclick="abrirHistoricoVendas()">📊 HISTÓRICO DE VENDAS</button>
             <a class="btn-main btn-laranja" href="Botao-Admin.html" target="_self">Admin</a>
@@ -439,6 +464,11 @@
             <div id="valor-total" class="campo-total">Total: R$ 0,00</div>
             
             <div class="container-pagamento">
+                <select id="metodo-pagamento" class="select-metodo">
+                    <option value="Dinheiro">💵 Dinheiro</option>
+                    <option value="Pix">📱 Pix</option>
+                    <option value="Cartão">💳 Cartão</option>
+                </select>
                 <input type="number" id="valor-recebido" class="input-pagamento" placeholder="Valor recebido do cliente" oninput="calcularTroco()">
                 <div id="texto-troco" class="texto-troco">Troco: R$ 0,00</div>
             </div>
@@ -476,6 +506,25 @@
         <div style="display:flex; flex-direction:column; align-items:center; gap:20px;">
             <h2>Histórico de Vendas / Baixas</h2>
             
+            <div class="dashboard-grid">
+                <div class="dash-card">
+                    <h4>PIX</h4>
+                    <p id="dash-pix">R$ 0,00</p>
+                </div>
+                <div class="dash-card">
+                    <h4>DINHEIRO</h4>
+                    <p id="dash-dinheiro">R$ 0,00</p>
+                </div>
+                <div class="dash-card">
+                    <h4>CARTÃO</h4>
+                    <p id="dash-cartao">R$ 0,00</p>
+                </div>
+                <div class="dash-card">
+                    <h4>TOP PRODUTO</h4>
+                    <p id="dash-top" style="font-size:12px; color:var(--warning)">---</p>
+                </div>
+            </div>
+
             <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--success);">
                 <span style="font-size: 14px; color: #aaa;">LUCRO TOTAL DE VENDAS:</span><br>
                 <span id="valor-lucro-total" style="font-size: 24px; font-weight: bold; color: var(--success);">R$ 0,00</span>
@@ -485,9 +534,10 @@
                 <table class="tabela-vendas">
                     <thead>
                         <tr>
-                            <th>Data/Hora</th>
+                            <th>Data</th>
                             <th>Produto</th>
                             <th>Qtd</th>
+                            <th>Tipo</th>
                             <th>Total</th>
                         </tr>
                     </thead>
@@ -496,7 +546,7 @@
                 </table>
             </div>
             
-            <button class="btn-delete" style="width: 100%; padding: 10px;" onclick="limparHistoricoVendas()">LIMPAR HISTÓRICO</button>
+            <button class="btn-delete" style="width: 100%; padding: 10px;" onclick="limparHistoricoVendasComSenha()">LIMPAR HISTÓRICO</button>
         </div>
     </div>
 
@@ -635,6 +685,21 @@
                 `;
                 container.appendChild(div);
             });
+        }
+
+        // --- FUNÇÃO PARA LOGIN ANTES DE ENTRAR NO SISTEMA ---
+        function abrirSistComSenha() {
+            const usuarioCorreto = "admin";
+            const senhaCorreta = "1234";
+
+            const user = prompt("Digite o ID de Usuário:");
+            const pass = prompt("Digite a Senha:");
+
+            if(user === usuarioCorreto && pass === senhaCorreta) {
+                abrirSist();
+            } else {
+                alert("ID ou Senha incorretos!");
+            }
         }
 
         async function abrirSist() {
@@ -841,6 +906,8 @@
         function darBaixa(id, histIndex) {
             const qtdBaixa = parseInt(document.getElementById(`baixa-${histIndex}`).value);
             const pIndex = produtos.findIndex(p => p.id === id);
+            // Captura o método selecionado no modal de baixa individual (caso precise no futuro)
+            const metodo = document.getElementById('metodo-pagamento').value;
             
             if(pIndex !== -1) {
                 if(produtos[pIndex].qtd >= qtdBaixa) {
@@ -851,6 +918,7 @@
                         data: new Date().toLocaleString(),
                         nome: produtos[pIndex].nome || "Produto",
                         qtd: qtdBaixa,
+                        tipo: metodo, // NOVO CAMPO
                         valorTotal: produtos[pIndex].valor * qtdBaixa
                     });
                     localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
@@ -870,6 +938,8 @@
         function baixaGeral() {
             if(!confirm("Deseja dar baixa em todos os itens da lista?")) return;
             
+            const metodo = document.getElementById('metodo-pagamento').value;
+
             historico.forEach((item, index) => {
                 const qtdBaixa = parseInt(document.getElementById(`baixa-${index}`).value);
                 const pIndex = produtos.findIndex(p => p.id === item.id);
@@ -881,6 +951,7 @@
                         data: new Date().toLocaleString(),
                         nome: produtos[pIndex].nome || "Produto",
                         qtd: qtdBaixa,
+                        tipo: metodo, // NOVO CAMPO
                         valorTotal: produtos[pIndex].valor * qtdBaixa
                     });
                 }
@@ -921,28 +992,63 @@
             const corpoTabela = document.getElementById('corpo-tabela-vendas');
             const displayLucro = document.getElementById('valor-lucro-total');
             corpoTabela.innerHTML = "";
+            
             let lucroTotal = 0;
+            let totPix = 0;
+            let totDinheiro = 0;
+            let totCartao = 0;
+            let contagemProdutos = {};
 
             vendasRealizadas.forEach(v => {
-                lucroTotal += parseFloat(v.valorTotal);
+                const valor = parseFloat(v.valorTotal);
+                lucroTotal += valor;
+                
+                // Opção 5: Soma por tipo
+                if(v.tipo === "Pix") totPix += valor;
+                else if(v.tipo === "Dinheiro") totDinheiro += valor;
+                else if(v.tipo === "Cartão") totCartao += valor;
+
+                // Opção 1: Contagem para Top Produto
+                contagemProdutos[v.nome] = (contagemProdutos[v.nome] || 0) + v.qtd;
+
                 corpoTabela.innerHTML += `
                     <tr>
-                        <td>${v.data}</td>
+                        <td>${v.data.split(' ')[0]}</td>
                         <td>${v.nome}</td>
                         <td>${v.qtd}</td>
-                        <td style="color:var(--success)">R$ ${parseFloat(v.valorTotal).toFixed(2)}</td>
+                        <td>${v.tipo || 'N/A'}</td>
+                        <td style="color:var(--success)">R$ ${valor.toFixed(2)}</td>
                     </tr>
                 `;
             });
 
+            // Atualiza Dashboard (Opção 1)
+            document.getElementById('dash-pix').innerText = `R$ ${totPix.toFixed(2)}`;
+            document.getElementById('dash-dinheiro').innerText = `R$ ${totDinheiro.toFixed(2)}`;
+            document.getElementById('dash-cartao').innerText = `R$ ${totCartao.toFixed(2)}`;
+            
+            let topProd = Object.keys(contagemProdutos).reduce((a, b) => contagemProdutos[a] > contagemProdutos[b] ? a : b, "---");
+            document.getElementById('dash-top').innerText = topProd;
+
             displayLucro.innerText = `R$ ${lucroTotal.toFixed(2)}`;
         }
 
-        function limparHistoricoVendas() {
-            if(confirm("Deseja apagar todo o histórico de lucro e vendas?")) {
-                vendasRealizadas = [];
-                localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
-                renderizarHistoricoVendas();
+        // --- FUNÇÃO PARA LIMPAR HISTÓRICO COM SENHA ---
+        function limparHistoricoVendasComSenha() {
+            const usuarioCorreto = "admin";
+            const senhaCorreta = "1234";
+
+            const user = prompt("Digite o ID de Usuário para limpar:");
+            const pass = prompt("Digite a Senha para limpar:");
+
+            if(user === usuarioCorreto && pass === senhaCorreta) {
+                if(confirm("Deseja apagar todo o histórico de lucro e vendas?")) {
+                    vendasRealizadas = [];
+                    localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+                    renderizarHistoricoVendas();
+                }
+            } else {
+                alert("Acesso negado: ID ou Senha incorretos!");
             }
         }
 
