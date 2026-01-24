@@ -450,11 +450,11 @@
 
     <div id="overlay-login">
         <h2>🔒 SISTEMA BLOQUEADO</h2>
-        <p>Acesse com suas credenciais</p>
-        <div style="display:flex; flex-direction:column; gap:10px; width: 80%; max-width:300px;">
+        <p id="msg-login">Verificando credenciais...</p>
+        <div id="campos-login" style="display:none; flex-direction:column; gap:10px; width: 80%; max-width:300px;">
             <input type="text" id="login-id" placeholder="ID de Usuário" style="padding:15px; border-radius:8px; border:none;">
             <input type="password" id="login-senha" placeholder="Senha" style="padding:15px; border-radius:8px; border:none;">
-            <button class="btn-main btn-green" onclick="validarAcessoGeral()">ENTRAR</button>
+            <button class="btn-main btn-green" onclick="validarAcessoManual()">ENTRAR</button>
         </div>
     </div>
 
@@ -602,59 +602,84 @@
         let aguardandoReset = false;
         let valorTotalVenda = 0;
         
-        // LOGICA DE ACESSO E TEMPO
+        // --- LOGICA DE ACESSO PERSISTENTE ---
         let logado = false;
         let tempoInatividade;
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
         function resetarInatividade() {
             clearTimeout(tempoInatividade);
-            tempoInatividade = setTimeout(bloquearSistema, 60000); // 1 minuto
+            tempoInatividade = setTimeout(bloquearSistema, 60000); 
         }
 
-        function bloquearSistema() {
+        async function bloquearSistema() {
             logado = false;
             document.getElementById('overlay-login').style.display = 'flex';
+            document.getElementById('msg-login').innerText = "Verificando credenciais salvas...";
+            document.getElementById('campos-login').style.display = "none";
+            
+            // Tenta validar automaticamente com o que está salvo
+            const idSalvo = localStorage.getItem('login_albatroz_id');
+            const senhaSalva = localStorage.getItem('login_albatroz_pass');
+
+            if(idSalvo && senhaSalva) {
+                const valido = await validarCredenciaisPlanilha(idSalvo, senhaSalva);
+                if(valido) {
+                    liberarAcesso();
+                } else {
+                    mostrarCamposLogin();
+                }
+            } else {
+                mostrarCamposLogin();
+            }
         }
 
-        async function validarAcessoGeral() {
-            const inputId = document.getElementById('login-id').value;
-            const inputSenha = document.getElementById('login-senha').value;
+        function mostrarCamposLogin() {
+            document.getElementById('msg-login').innerText = "Credenciais inválidas ou ausentes.";
+            document.getElementById('campos-login').style.display = "flex";
+        }
+
+        function liberarAcesso() {
+            logado = true;
+            document.getElementById('overlay-login').style.display = 'none';
+            resetarInatividade();
+        }
+
+        async function validarAcessoManual() {
+            const id = document.getElementById('login-id').value;
+            const pass = document.getElementById('login-senha').value;
             
+            const valido = await validarCredenciaisPlanilha(id, pass);
+            if(valido) {
+                localStorage.setItem('login_albatroz_id', id);
+                localStorage.setItem('login_albatroz_pass', pass);
+                liberarAcesso();
+            } else {
+                alert("ID ou Senha incorretos na planilha!");
+            }
+        }
+
+        async function validarCredenciaisPlanilha(id, pass) {
             try {
-                const response = await fetch(URL_PLANILHA);
+                const response = await fetch(URL_PLANILHA + "&t=" + new Date().getTime()); // Evita cache do navegador
                 const data = await response.text();
                 const linhas = data.split('\n');
                 
-                let acessoPermitido = false;
-
-                // Percorre a planilha (Coluna B é índice 1, Coluna C é índice 2)
                 for (let i = 1; i < linhas.length; i++) {
                     const colunas = linhas[i].split(',');
                     if (colunas.length >= 3) {
-                        const idPlanilha = colunas[1].trim();
-                        const senhaPlanilha = colunas[2].trim();
-                        
-                        if (inputId === idPlanilha && inputSenha === senhaPlanilha) {
-                            acessoPermitido = true;
-                            break;
+                        if (colunas[1].trim() === id && colunas[2].trim() === pass) {
+                            return true;
                         }
                     }
                 }
-
-                if (acessoPermitido) {
-                    logado = true;
-                    document.getElementById('overlay-login').style.display = 'none';
-                    document.getElementById('login-id').value = "";
-                    document.getElementById('login-senha').value = "";
-                    resetarInatividade();
-                } else {
-                    alert("Usuário ou Senha incorretos!");
-                }
-            } catch (error) {
-                alert("Erro ao conectar com a planilha de acesso.");
+                return false;
+            } catch (e) {
+                console.error("Erro ao validar planilha", e);
+                return false;
             }
         }
+        // --- FIM LOGICA ACESSO ---
 
         let barcodeBuffer = "";
         window.addEventListener("keydown", (e) => {
@@ -681,7 +706,7 @@
         window.onload = () => {
             if(historico.length > 0) atualizarLista();
             atualizarVisualizacaoHome();
-            bloquearSistema(); // Inicia bloqueado
+            bloquearSistema(); 
         };
 
         function atualizarVisualizacaoHome() {
@@ -930,6 +955,7 @@
         }
 
         function abrirHistoricoVendas() {
+            // A verificação já acontece no carregamento ou no tempo de expiração
             if(!logado) {
                 bloquearSistema();
                 return;
@@ -1019,3 +1045,4 @@
     </script>
 </body>
 </html>
+
