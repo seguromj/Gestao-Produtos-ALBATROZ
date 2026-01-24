@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -444,17 +445,33 @@
             justify-content: center;
             color: white;
         }
+
+        /* Estilo para Botão Suporte */
+        .btn-suporte {
+            background: #25D366;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+            display: block;
+            text-align: center;
+        }
     </style>
 </head>
 <body onclick="resetarInatividade()" onkeydown="resetarInatividade()">
 
     <div id="overlay-login">
-        <h2>🔒 SISTEMA BLOQUEADO</h2>
+        <h2 id="titulo-bloqueio">🔒 SISTEMA BLOQUEADO</h2>
         <p id="msg-login">Verificando credenciais...</p>
         <div id="campos-login" style="display:none; flex-direction:column; gap:10px; width: 80%; max-width:300px;">
             <input type="text" id="login-id" placeholder="ID de Usuário" style="padding:15px; border-radius:8px; border:none;">
             <input type="password" id="login-senha" placeholder="Senha" style="padding:15px; border-radius:8px; border:none;">
-            <button class="btn-main btn-green" onclick="validarAcessoManual()">ENTRAR</button>
+            <button class="btn-main btn-green" id="btn-validar-acesso" onclick="validarAcessoManual()">ENTRAR</button>
+            <button class="btn-voltar" style="width:100%; margin:0" onclick="window.location.reload()">VOLTAR</button>
+            <a href="https://wa.me/5562995679219?text=Olá, eu esqueci a senha para entrar no sistema Albatroz" class="btn-suporte">SUPORTE</a>
         </div>
     </div>
 
@@ -606,6 +623,7 @@
         let logado = false;
         let logadoHistorico = false;
         let tempoInatividade;
+        let modoAcessoEspecial = false; // Flag para saber se valida Histórico ou Sistema
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
         function resetarInatividade() {
@@ -618,12 +636,13 @@
             document.getElementById('overlay-login').style.display = 'flex';
             document.getElementById('msg-login').innerText = "Verificando credenciais salvas...";
             document.getElementById('campos-login').style.display = "none";
+            document.getElementById('titulo-bloqueio').innerText = "🔒 SISTEMA BLOQUEADO";
             
             // Tenta validar automaticamente com o que está salvo
             const idSalvo = localStorage.getItem('login_albatroz_id');
             const senhaSalva = localStorage.getItem('login_albatroz_pass');
 
-            if(idSalvo && senhaSalva) {
+            if(idSalvo && senhaSalva && !modoAcessoEspecial) {
                 const valido = await validarCredenciaisPlanilha(idSalvo, senhaSalva);
                 if(valido) {
                     liberarAcesso();
@@ -636,7 +655,13 @@
         }
 
         function mostrarCamposLogin() {
-            document.getElementById('msg-login').innerText = "Credenciais inválidas ou ausentes.";
+            if(modoAcessoEspecial) {
+                document.getElementById('titulo-bloqueio').innerText = "📊 ACESSO AO HISTÓRICO";
+                document.getElementById('msg-login').innerText = "Informe credenciais de Gerente.";
+            } else {
+                document.getElementById('titulo-bloqueio').innerText = "🔒 SISTEMA BLOQUEADO";
+                document.getElementById('msg-login').innerText = "Credenciais inválidas ou ausentes.";
+            }
             document.getElementById('campos-login').style.display = "flex";
         }
 
@@ -652,8 +677,10 @@
             
             const valido = await validarCredenciaisPlanilha(id, pass);
             if(valido) {
-                localStorage.setItem('login_albatroz_id', id);
-                localStorage.setItem('login_albatroz_pass', pass);
+                if(!modoAcessoEspecial) {
+                    localStorage.setItem('login_albatroz_id', id);
+                    localStorage.setItem('login_albatroz_pass', pass);
+                }
                 liberarAcesso();
             } else {
                 alert("ID ou Senha incorretos na planilha!");
@@ -668,7 +695,20 @@
                 
                 for (let i = 1; i < linhas.length; i++) {
                     const colunas = linhas[i].split(',');
-                    if (colunas.length >= 3) {
+                    if (colunas.length >= 5) {
+                        if (modoAcessoEspecial) {
+                            // Valida colunas D (índice 3) e E (índice 4)
+                            if (colunas[3].trim() === id && colunas[4].trim() === pass) {
+                                return true;
+                            }
+                        } else {
+                            // Valida colunas B (índice 1) e C (índice 2)
+                            if (colunas[1].trim() === id && colunas[2].trim() === pass) {
+                                return true;
+                            }
+                        }
+                    } else if (colunas.length >= 3 && !modoAcessoEspecial) {
+                        // Fallback caso a planilha não tenha colunas D e E ainda
                         if (colunas[1].trim() === id && colunas[2].trim() === pass) {
                             return true;
                         }
@@ -958,6 +998,7 @@
         function abrirHistoricoVendas() {
             // Regra especial solicitada: sempre bloqueia e pede senha do zero ao entrar
             logadoHistorico = false; 
+            modoAcessoEspecial = true; // Ativa validação das colunas D e E
             bloquearSistema();
             
             // Monitora quando o login for bem-sucedido para abrir a modal
@@ -1028,6 +1069,7 @@
             if (scanner) scanner.stop();
             // Reseta o login ao sair de qualquer seção para garantir a segurança no retorno do Histórico
             logado = false; 
+            modoAcessoEspecial = false;
         }
 
         function exportarDados() {
