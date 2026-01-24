@@ -609,51 +609,21 @@
         </div>
     </div>
 
-
-    <script>
-        let registros = JSON.parse(localStorage.getItem('mjsk_data_v5')) || [];
+<script>
+        let scanner;
+        let cameras = [];
+        // ... (todo o seu código original do Albatroz continua aqui)
         
-        let dataFiltro = new Date();
-        let planilhaMensal = Array(32).fill(0);
-        let historicoMensal = Array(32).fill([]);
-
-        let tempoInicio = localStorage.getItem('mjsk_inicio_turno') || null;
-        let timerInterval = null;
-
-        const motoboy = JSON.parse(localStorage.getItem('mjsk_motorista'));
-        if(motoboy) {
-            document.getElementById('modal-login').style.display = 'none';
-            document.getElementById('user-logged').innerText = "Motorista: " + motoboy.nome;
-            iniciarCronometro(); 
-            iniciarContagemMensal();
-            if(tempoInicio) iniciarRelogioTurno();
-        }
-
-        function entrarServico() {
-            const n = document.getElementById('login-nome').value;
-            const w = document.getElementById('login-whatsapp').value;
-            if(n && w) {
-                localStorage.setItem('mjsk_motorista', JSON.stringify({nome: n, whatsapp: w}));
-                location.reload();
-            } else { alert("Preencha Nome e Whats!"); }
-        }
-
-        function iniciarCronometro() {
-            const liberadoPermanente = localStorage.getItem('mjsk_liberado_permanente') === 'true';
-            if (!liberadoPermanente) {
-                setTimeout(function() {
-                    if (localStorage.getItem('mjsk_liberado_permanente') !== 'true') {
-                        document.getElementById('modal-trava').style.display = 'flex';
-                    }
-                }, 120000); 
-            }
-        }
-
-
-
-
-    
+        // Adicione este código para capturar o evento de instalação (opcional)
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log("O App Albatroz está pronto para ser instalado.");
+        });
+</script>
     <script>
+
         let scanner;
         let cameras = [];
         let currentCamIndex = 0;
@@ -1139,5 +1109,6 @@
     </script>
 </body>
 </html>
+
 
 
