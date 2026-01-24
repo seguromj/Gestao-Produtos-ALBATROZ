@@ -604,6 +604,7 @@
         
         // --- LOGICA DE ACESSO PERSISTENTE ---
         let logado = false;
+        let logadoHistorico = false;
         let tempoInatividade;
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
@@ -955,14 +956,19 @@
         }
 
         function abrirHistoricoVendas() {
-            // A verificação já acontece no carregamento ou no tempo de expiração
-            if(!logado) {
-                bloquearSistema();
-                return;
-            }
-            document.getElementById('modalGen').style.display = 'flex';
-            document.getElementById('home').style.display = 'none';
-            renderizarHistoricoVendas();
+            // Regra especial solicitada: sempre bloqueia e pede senha do zero ao entrar
+            logadoHistorico = false; 
+            bloquearSistema();
+            
+            // Monitora quando o login for bem-sucedido para abrir a modal
+            const interval = setInterval(() => {
+                if (logado) {
+                    clearInterval(interval);
+                    document.getElementById('modalGen').style.display = 'flex';
+                    document.getElementById('home').style.display = 'none';
+                    renderizarHistoricoVendas();
+                }
+            }, 500);
         }
 
         function renderizarHistoricoVendas() {
@@ -1020,6 +1026,8 @@
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
             document.getElementById('home').style.display = 'flex';
             if (scanner) scanner.stop();
+            // Reseta o login ao sair de qualquer seção para garantir a segurança no retorno do Histórico
+            logado = false; 
         }
 
         function exportarDados() {
@@ -1045,4 +1053,3 @@
     </script>
 </body>
 </html>
-
