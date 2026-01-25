@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -115,27 +116,22 @@
         .btn-vermelho { background: var(--danger); color: white; text-decoration: none; }
         .btn-black { background: #333; color: white; text-decoration: none; grid-column: span 2; }
 
-        /* ESTILO DO FORMULÁRIO DE CADASTRO */
         .form-cadastro {
             display: flex;
             flex-direction: column;
             gap: 12px;
             background: var(--card);
-            padding: 25px;
-            border-radius: 15px;
+            padding: 20px;
+            border-radius: 12px;
             border: 1px solid #333;
-            max-width: 500px;
-            width: 100%;
-            margin: 0 auto 30px auto;
         }
 
         .form-cadastro input {
-            padding: 14px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #444;
             background: #222;
             color: white;
-            font-size: 14px;
         }
 
         .modal {
@@ -153,11 +149,11 @@
 
         #reader {
             width: 100%;
-            max-width: 400px;
-            margin: 20px auto;
+            max-width: 350px;
+            margin: 0 auto;
             border-radius: 15px;
             overflow: hidden;
-            border: 3px solid #333;
+            border: 2px solid #333;
         }
 
         .grid-produtos {
@@ -173,6 +169,7 @@
             border-radius: 12px;
             padding: 10px;
             text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .produto-card img {
@@ -180,6 +177,9 @@
             height: 120px;
             object-fit: contain;
         }
+
+        .dash-card { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; text-align: center; }
+        .dash-card p { font-size: 18px; font-weight: bold; color: var(--success); margin: 5px 0; }
 
         #overlay-login {
             display: none;
@@ -193,13 +193,18 @@
             justify-content: center;
         }
 
-        .btn-voltar { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 20px; align-self: flex-start; }
+        .btn-voltar { background: #333; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
+
+        .tabela-vendas { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .tabela-vendas th, .tabela-vendas td { border: 1px solid #333; padding: 8px; text-align: left; }
+        .tabela-vendas th { background: #222; color: var(--warning); }
     </style>
 </head>
 <body onclick="resetarInatividade()">
 
     <div id="overlay-login">
-        <h2 style="color: white;">🔒 SISTEMA BLOQUEADO</h2>
+        <h2 style="color: white;" id="titulo-bloqueio">🔒 SISTEMA BLOQUEADO</h2>
+        <p id="msg-login" style="color: #aaa;">Verificando credenciais...</p>
         <div id="campos-login" style="display:none; flex-direction:column; gap:10px; width: 300px;">
             <input type="text" id="login-id" placeholder="Usuário" style="padding:15px; border-radius:8px;">
             <input type="password" id="login-senha" placeholder="Senha" style="padding:15px; border-radius:8px;">
@@ -230,7 +235,7 @@
             </div>
 
             <div class="secao-disponiveis">
-                <h3 style="font-size: 14px; color: #aaa;">ESTOQUE ATUAL</h3>
+                <h3 style="font-size: 13px; color: #aaa; margin-top: 0;">ESTOQUE DISPONÍVEL</h3>
                 <div id="lista-disponiveis"></div>
             </div>
         </div>
@@ -243,55 +248,98 @@
 
     <div id="modalSist" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
-        <div style="text-align: center;">
-            <button class="btn-main btn-orange" style="margin: 0 auto 10px auto;" onclick="girarCamera()">🔁 TROCAR CÂMERA</button>
-            <div id="reader"></div>
-        </div>
+        <div id="reader"></div>
+        <div id="status-leitura" style="text-align:center; margin:10px; color:var(--success)">Pronto</div>
         <div class="lista-resultados" id="lista"></div>
     </div>
 
     <div id="modalCadastro" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
         <div class="form-cadastro">
-            <h2 style="text-align:center; margin-top:0;">Novo Produto</h2>
             <input type="hidden" id="edit-index">
-            <input type="text" id="p-nome" placeholder="Nome do Produto">
-            <input type="text" id="p-id" placeholder="Código de Barras / ID">
-            <input type="text" id="p-img" placeholder="URL da Imagem">
-            <input type="number" id="p-valor" placeholder="Preço (R$)">
-            <input type="number" id="p-qtd" placeholder="Quantidade inicial">
-            <button class="btn-main btn-green" style="width:100%;" onclick="salvarProduto()">SALVAR PRODUTO</button>
+            <input type="text" id="p-nome" placeholder="Nome">
+            <input type="text" id="p-id" placeholder="Código de Barras">
+            <input type="text" id="p-img" placeholder="Link da Imagem">
+            <input type="number" id="p-valor" placeholder="Valor (R$)">
+            <input type="number" id="p-qtd" placeholder="Qtd">
+            <button class="btn-main btn-green" onclick="salvarProduto()">SALVAR NO CATÁLOGO</button>
         </div>
-        <div class="grid-produtos" id="grid-produtos"></div>
+        <div class="grid-produtos" id="grid-produtos" style="margin-top:20px;"></div>
+    </div>
+
+    <div id="modalGen" class="modal">
+        <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
+        <h2 style="text-align:center">📊 Dashboard e Histórico</h2>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+            <div class="dash-card"><h4>LUCRO TOTAL</h4><p id="dash-lucro-total">R$ 0,00</p></div>
+            <div class="dash-card"><h4>VENDAS HOJE</h4><p id="dash-vendas-hoje">0</p></div>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="tabela-vendas">
+                <thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Total</th></tr></thead>
+                <tbody id="corpo-tabela-vendas"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
         let scanner;
-        let cameras = [];
-        let currentCamIndex = 0;
         let produtos = JSON.parse(localStorage.getItem('meus_produtos')) || [];
+        let vendasRealizadas = JSON.parse(localStorage.getItem('historico_vendas')) || [];
         let logado = false;
+        let modoAcessoEspecial = false;
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
         function resetarInatividade() {
             clearTimeout(window.tempoInatividade);
-            window.tempoInatividade = setTimeout(bloquearSistema, 60000); 
+            window.tempoInatividade = setTimeout(bloquearSistema, 120000); 
         }
 
         async function bloquearSistema() {
+            logado = false;
             document.getElementById('overlay-login').style.display = 'flex';
+            const idSalvo = localStorage.getItem('login_albatroz_id');
+            const senhaSalva = localStorage.getItem('login_albatroz_pass');
+
+            if(idSalvo && senhaSalva && !modoAcessoEspecial) {
+                const valido = await validarCredenciaisPlanilha(idSalvo, senhaSalva);
+                if(valido) liberarAcesso(); else mostrarCamposLogin();
+            } else mostrarCamposLogin();
+        }
+
+        function mostrarCamposLogin() {
             document.getElementById('campos-login').style.display = "flex";
+            document.getElementById('msg-login').innerText = "Credenciais necessárias";
         }
 
         function liberarAcesso() {
+            logado = true;
             document.getElementById('overlay-login').style.display = 'none';
         }
 
         async function validarAcessoManual() {
             const id = document.getElementById('login-id').value;
             const pass = document.getElementById('login-senha').value;
-            // Validação simplificada para o exemplo, integra com sua planilha se necessário
-            if(id && pass) liberarAcesso();
+            if(await validarCredenciaisPlanilha(id, pass)) {
+                if(!modoAcessoEspecial) {
+                    localStorage.setItem('login_albatroz_id', id);
+                    localStorage.setItem('login_albatroz_pass', pass);
+                }
+                liberarAcesso();
+            } else alert("Incorreto");
+        }
+
+        async function validarCredenciaisPlanilha(id, pass) {
+            try {
+                const response = await fetch(URL_PLANILHA + "&t=" + new Date().getTime());
+                const data = await response.text();
+                const linhas = data.split('\n');
+                for (let i = 1; i < linhas.length; i++) {
+                    const colunas = linhas[i].split(',');
+                    if (colunas[1]?.trim() === id && colunas[2]?.trim() === pass) return true;
+                }
+                return false;
+            } catch (e) { return false; }
         }
 
         function atualizarVisualizacaoHome() {
@@ -300,32 +348,18 @@
             container.innerHTML = ""; containerCatalogo.innerHTML = "";
             produtos.forEach(p => {
                 container.innerHTML += `<div class="card-disponivel"><span>${p.nome}</span><b>${p.qtd}</b></div>`;
-                containerCatalogo.innerHTML += `<div class="produto-card"><img src="${p.img}"><b>${p.nome}</b><br>R$ ${p.valor}</div>`;
+                containerCatalogo.innerHTML += `<div class="produto-card"><img src="${p.img}"><b>${p.nome}</b><br><span style="color:var(--success); font-weight:bold;">R$ ${p.valor}</span></div>`;
             });
         }
 
         async function abrirSist() {
             document.getElementById('modalSist').style.display = 'flex';
             document.getElementById('home').style.display = 'none';
-            
-            cameras = await Html5Qrcode.getCameras();
-            if (cameras.length > 0) startCamera(cameras[currentCamIndex].id);
-        }
-
-        function startCamera(cameraId) {
-            if (scanner) scanner.stop();
             scanner = new Html5Qrcode("reader");
-            scanner.start(cameraId, { fps: 10, qrbox: 250 }, (text) => {
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
                 document.getElementById('beep').play();
-                alert("Código detectado: " + text);
-            }).catch(err => console.error("Erro câmera:", err));
-        }
-
-        function girarCamera() {
-            if (cameras.length > 1) {
-                currentCamIndex = (currentCamIndex + 1) % cameras.length;
-                startCamera(cameras[currentCamIndex].id);
-            }
+                document.getElementById('status-leitura').innerText = "Lido: " + text;
+            });
         }
 
         function abrirCadastro() {
@@ -333,6 +367,18 @@
             document.getElementById('home').style.display = 'none';
             renderizarCatalogo();
         }
+
+        function renderizarCatalogo() {
+            const grid = document.getElementById('grid-produtos');
+            grid.innerHTML = "";
+            produtos.forEach((p, i) => {
+                grid.innerHTML += `<div class="produto-card" style="background:#eee; position:relative;">
+                    <button onclick="excluir(${i})" style="position:absolute; top:5px; right:5px; background:red; color:white; border:none; border-radius:4px; cursor:pointer;">X</button>
+                    <img src="${p.img}"><b>${p.nome}</b></div>`;
+            });
+        }
+
+        function excluir(i) { if(confirm("Excluir?")) { produtos.splice(i, 1); localStorage.setItem('meus_produtos', JSON.stringify(produtos)); renderizarCatalogo(); atualizarVisualizacaoHome(); } }
 
         function salvarProduto() {
             const p = {
@@ -348,24 +394,39 @@
             fecharTudo();
         }
 
-        function renderizarCatalogo() {
-            const grid = document.getElementById('grid-produtos');
-            grid.innerHTML = "";
-            produtos.forEach(p => {
-                grid.innerHTML += `<div class="produto-card" style="background:#eee;"><img src="${p.img}"><b>${p.nome}</b></div>`;
+        function abrirHistoricoVendas() {
+            modoAcessoEspecial = true;
+            bloquearSistema();
+            const check = setInterval(() => {
+                if(logado) {
+                    clearInterval(check);
+                    document.getElementById('modalGen').style.display = 'flex';
+                    document.getElementById('home').style.display = 'none';
+                    renderizarHistorico();
+                }
+            }, 500);
+        }
+
+        function renderizarHistorico() {
+            const corpo = document.getElementById('corpo-tabela-vendas');
+            corpo.innerHTML = "";
+            let total = 0;
+            vendasRealizadas.forEach(v => {
+                total += parseFloat(v.valorTotal || 0);
+                corpo.innerHTML += `<tr><td>${v.data}</td><td>${v.nome}</td><td>${v.qtd}</td><td>R$ ${v.valorTotal}</td></tr>`;
             });
+            document.getElementById('dash-lucro-total').innerText = "R$ " + total.toFixed(2);
+            document.getElementById('dash-vendas-hoje').innerText = vendasRealizadas.length;
         }
 
         function fecharTudo() {
             if (scanner) scanner.stop();
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
             document.getElementById('home').style.display = 'flex';
+            modoAcessoEspecial = false;
         }
 
-        window.onload = () => {
-            atualizarVisualizacaoHome();
-            bloquearSistema();
-        };
+        window.onload = () => { atualizarVisualizacaoHome(); bloquearSistema(); };
     </script>
 </body>
 </html>
