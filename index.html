@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -41,7 +40,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
         }
 
@@ -54,11 +53,13 @@
             gap: 20px;
             margin-top: 20px;
             align-items: flex-start;
+            flex-wrap: wrap; /* Adicionado para responsividade */
         }
 
         /* Divisões Laterais da Imagem */
         .coluna-esquerda {
             flex: 1;
+            min-width: 320px; /* Garante que não fique muito estreito */
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -66,6 +67,7 @@
 
         .coluna-direita {
             flex: 2;
+            min-width: 320px; /* Garante que não fique muito estreito */
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -490,6 +492,7 @@
             .container-topo { flex-direction: column; align-items: center; }
             .menu-principal { grid-template-columns: 1fr; }
             .btn-black { grid-column: span 1; }
+            .coluna-esquerda, .coluna-direita { width: 100%; }
         }
     </style>
 </head>
@@ -511,25 +514,17 @@
 
     <div id="aviso-erro">PRODUTO NÃO EXISTE</div>
 
-    <div class="container-topo" id="home"></div>
-
-
-            
+    <div class="container-topo" id="home">
         
         <div class="coluna-esquerda">
-
-            
-            <div class="coluna-esquerda">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                <img src="icon-512.png" id="logo-sistema" style="width: 100px; height: 100px; border-radius: 50%;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <img src="icon-512.png" id="logo-sistema" style="width: 80px; height: 80px; border-radius: 50%;">
                 <div>
-                    <h2 style="margin:0; color: white;">SISTEMA ALBATROZ</h2>
+                    <h2 style="margin:0; color: white;">ALBATROZ</h2>
                     <small style="color: var(--primary);">Home</small>
                 </div>
+            </div>
 
-                
-            <h1 style="text-align:center; margin: 10px 0; color: var(--warning);">🦅 SISTEMA ALBATROZ 🦅</h1>
-            
             <div class="menu-principal">
                 <button class="btn-main btn-blue" onclick="abrirSist()">ENTRAR NO SISTEMA</button>
                 <button class="btn-main btn-green" onclick="abrirHistoricoVendas()">📊 HISTÓRICO</button>
@@ -551,27 +546,22 @@
         <div class="coluna-direita">
             <div class="secao-disponiveis" style="min-height: 200px;">
                 <h3 style="margin-top:0; text-align:center;">CATÁLOGO RÁPIDO</h3>
-                <div class="grid-produtos" id="home-catalogo-view">
-                    </div>
-                <p style="text-align: center; color: #666; font-size: 12px;">Use os botões laterais para gerenciar o sistema.</p>
+                <div class="grid-produtos" id="home-catalogo-view"></div>
+                <p style="text-align: center; color: #666; font-size: 12px; margin-top: 15px;">Use os botões laterais para gerenciar o sistema.</p>
             </div>
         </div>
     </div>
 
     <div id="modalSist" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
-        
         <div class="camera-controls">
             <div id="status-leitura">Pronto para escanear</div>
             <button class="btn-circle" onclick="girarCamera()">🔁</button>
         </div>
-
         <div id="reader"></div>
-
         <div id="container-baixa-geral" style="padding: 10px 0; display: none; flex-shrink: 0;">
             <button class="btn-baixa-geral" onclick="baixaGeral()">DAR BAIXA EM TUDO</button>
             <div id="valor-total" class="campo-total">Total: R$ 0,00</div>
-            
             <div class="container-pagamento">
                 <select id="metodo-pagamento" class="select-metodo">
                     <option value="Dinheiro">💵 Dinheiro</option>
@@ -582,13 +572,11 @@
                 <div id="texto-troco" class="texto-troco">Troco: R$ 0,00</div>
             </div>
         </div>
-
         <div class="lista-resultados" id="lista"></div>
     </div>
 
     <div id="modalCadastro" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
-        
         <div class="form-cadastro">
             <h3 style="margin:0">Cadastrar/Editar</h3>
             <input type="hidden" id="edit-index">
@@ -597,18 +585,15 @@
             <input type="number" id="p-valor" placeholder="Valor (R$)">
             <input type="number" id="p-qtd" placeholder="Quantidade em Estoque">
             <button class="btn-main btn-green" style="padding:15px; width: 100%;" onclick="salvarProduto()">SALVAR NO CATÁLOGO</button>
-            
             <div class="container-backup">
                 <button class="btn-backup" onclick="exportarDados()">📤 EXPORTAR DADOS</button>
                 <button class="btn-backup" onclick="document.getElementById('input-import').click()">📥 IMPORTAR DADOS</button>
                 <input type="file" id="input-import" style="display:none" accept=".json" onchange="importarDados(event)">
             </div>
         </div>
-
         <div class="busca-container">
             <input type="text" id="busca-id" placeholder="🔍 Buscar produto por ID..." oninput="renderizarCatalogo()">
         </div>
-
         <div class="grid-produtos" id="grid-produtos"></div>
     </div>
 
@@ -616,7 +601,6 @@
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
         <div style="display:flex; flex-direction:column; align-items:center; gap:20px;">
             <h2>Dashboard e Histórico</h2>
-            
             <div class="dashboard-grid">
                 <div class="dash-card">
                     <h4>PIX HOJE</h4>
@@ -635,17 +619,14 @@
                     <p id="dash-top" style="font-size:12px; color:var(--warning)">---</p>
                 </div>
             </div>
-
             <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning);">
                 <span style="font-size: 14px; color: #aaa;">LUCRO NAS ÚLTIMAS 24H:</span><br>
                 <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span>
             </div>
-
             <div id="resumo-lucro-total" style="width: 100%; text-align: center; background: #222; padding: 10px; border-radius: 10px; border: 1px solid var(--success); margin-top: -10px;">
                 <span style="font-size: 12px; color: #aaa;">LUCRO TOTAL ACUMULADO:</span><br>
                 <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span>
             </div>
-
             <div style="width: 100%; overflow-x: auto;">
                 <table class="tabela-vendas">
                     <thead>
@@ -660,7 +641,6 @@
                     <tbody id="corpo-tabela-vendas"></tbody>
                 </table>
             </div>
-            
             <button class="btn-delete" style="width: 100%; padding: 10px;" onclick="limparHistoricoVendasComSenha()">LIMPAR HISTÓRICO</button>
         </div>
     </div>
@@ -676,11 +656,10 @@
         let aguardandoReset = false;
         let valorTotalVenda = 0;
         
-        // --- LOGICA DE ACESSO PERSISTENTE ---
         let logado = false;
         let logadoHistorico = false;
         let tempoInatividade;
-        let modoAcessoEspecial = false; // Flag para saber se valida Histórico ou Sistema
+        let modoAcessoEspecial = false; 
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
         function resetarInatividade() {
@@ -808,7 +787,6 @@
             }
 
             produtos.forEach(p => {
-                // Lista Lateral
                 const div = document.createElement('div');
                 div.className = 'card-disponivel';
                 if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
@@ -818,7 +796,6 @@
                 `;
                 container.appendChild(div);
 
-                // Grid Central da Imagem
                 const cardCat = document.createElement('div');
                 cardCat.className = 'produto-card';
                 cardCat.innerHTML = `
@@ -1149,7 +1126,4 @@
     </script>
 </body>
 </html>
-
-
-
 
