@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-<link rel="manifest" href="manifest.json">
+ <link rel="manifest" href="manifest.json">
+
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
@@ -645,6 +646,61 @@
         </div>
     </div>
 
+
+
+
+
+    
+<script>
+  let promptDeInstalacao;
+  const areaInstalacao = document.getElementById('container-instalacao');
+  const botaoInstalar = document.getElementById('btnInstalarApp');
+  const botaoRecusar = document.getElementById('btnRecusarApp');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    promptDeInstalacao = e;
+
+    const tempoRecusa = localStorage.getItem('app_recusado_em');
+    const agora = Date.now();
+    const umMinuto = 1 * 60 * 1000; // Define o tempo para 1 minuto
+
+    // Só mostra se nunca recusou ou se já passou 1 minuto da última recusa
+    if (!tempoRecusa || (agora - tempoRecusa > umMinuto)) {
+        iniciarContadorAparecer(5000);
+    }
+  });
+
+  function iniciarContadorAparecer(tempo) {
+    setTimeout(() => {
+      const modoApp = window.matchMedia('(display-mode: standalone)').matches;
+      if (!modoApp && promptDeInstalacao) {
+        areaInstalacao.style.display = 'block';
+      }
+    }, tempo);
+  }
+
+  botaoInstalar.addEventListener('click', () => {
+    if (promptDeInstalacao) {
+      promptDeInstalacao.prompt();
+      promptDeInstalacao.userChoice.then((escolha) => {
+        if (escolha.outcome === 'accepted') {
+          areaInstalacao.style.display = 'none';
+          localStorage.removeItem('app_recusado_em');
+        }
+      });
+    }
+  });
+
+  botaoRecusar.addEventListener('click', () => {
+    areaInstalacao.style.display = 'none';
+    localStorage.setItem('app_recusado_em', Date.now());
+  });
+
+  window.addEventListener('appinstalled', () => {
+    areaInstalacao.style.display = 'none';
+  });
+</script>
 <script>
         
         let scanner;
@@ -1126,4 +1182,5 @@
     </script>
 </body>
 </html>
+
 
