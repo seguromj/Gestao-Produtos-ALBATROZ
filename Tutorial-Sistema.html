@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+   <link rel="manifest" href="manifest.json">
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log("ALBATROZ, App configurado com sucesso!"));
+  }
+</script>
+    
+   <title>Painel de Pedidos - Spook Ice</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; text-align: center; }
+        h1 { color: #333; }
+        
+        .nav-buttons { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+       .gestao { 
+            text-decoration: none; 
+            background-color: #007bff; 
+            color: white; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        
+        .btn-link { 
+            text-decoration: none; 
+            background-color: #007bff; 
+            color: white; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn-link:hover { background-color: #0056b3; }
+        .btn-admin { background-color: #6c757d; }
+        .btn-admin:hover { background-color: #495057; }
+
+        #lista-pedidos, #lista-arquivados { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-top: 20px; }
+        
+        .titulo-pasta { margin-top: 50px; padding: 10px; background: #27ae60; color: white; border-radius: 5px; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto; cursor: pointer; }
+
+        .card { background: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; width: 100%; max-width: 400px; border-left: 5px solid #25d366; text-align: left; position: relative; }
+        
+        .card-impresso { background-color: #e8f4fd; border-left: 5px solid #007bff; }
+        
+        .card h3 { margin: 0 0 5px 0; color: #d32f2f; }
+        
+        /* ESTILO DO ID ÚNICO NUMÉRICO */
+        .pedido-id-tag { font-size: 16px; font-weight: bold; color: white; background: #d32f2f; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
+
+        .card-arquivado { border-left: 5px solid #7f8c8d; opacity: 0.8; }
+
+        .btn-imprimir { background-color: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .btn-imprimir:hover { background-color: #555; }
+
+        .btn-arquivar { background-color: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 5px; }
+        .btn-arquivar:hover { background-color: #27ae60; }
+
+        .btn-excluir { position: absolute; top: 10px; right: 10px; background: #ff4757; color: white; border: none; border-radius: 5px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            body * { visibility: hidden; }
+            #cupom-print, #cupom-print * { visibility: visible; }
+            #cupom-print { position: absolute; left: 0; top: 0; width: 58mm; font-family: monospace; font-size: 10pt; line-height: 1.2; }
+        }
+
+        /* ESTILO DA TELA DE BLOQUEIO */
+        #tela-bloqueio {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            z-index: 99999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #tela-bloqueio input { margin: 10px; padding: 10px; border-radius: 5px; border: none; width: 250px; }
+        #tela-bloqueio button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="tela-bloqueio">
+        <h2>Acesso Bloqueado</h2>
+        <p>Por favor, insira suas credenciais para continuar.</p>
+        <input type="text" id="login-id" placeholder="ID de Acesso">
+        <input type="password" id="login-senha" placeholder="Senha">
+        <button onclick="verificarAcesso()">Liberar Acesso</button>
+        <p id="erro-login" style="color: #ff4757; margin-top: 10px;"></p>
+    </div>
+
+    <div class="no-print">
+        <div class="nav-buttons">
+            <a href="Gestao-produtos.html" target="_blank" class="gestao">🖥️ Gestão</a>
+            
+            <button onclick="limparPasta()" class="btn-link" style="background-color: #c0392b;">🗑️ Esvaziar Pasta</button>
+        </div>
+
+        <h1>Spook Ice</h1>
+        <div id="status">Verificando planilha...</div>
+    </div>
+
+    <h2 class="no-print">🚀 Novos Pedidos</h2>
+    <div id="lista-pedidos"></div>
+
+    <hr class="no-print" style="margin-top: 50px; width: 80%;">
+
+    <div class="no-print titulo-pasta" onclick="togglePasta()">
+        📁 PASTA DE ARQUIVADOS (Clique para ver/esconder)
+    </div>
+    <div id="lista-arquivados" class="no-print" style="display: none;"></div>
+
+    <div id="cupom-print"></div>
+
+
+
+
+    <div id="container-instalacao" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; max-width: 300px; background: rgba(0,0,0,0.95); padding: 30px 20px; text-align: center; border: 1px solid #d4af37; border-radius: 15px; z-index: 10000; box-shadow: 0 0 20px rgba(0,0,0,0.8);">
+    <p style="color: #fff; margin: 0 0 20px 0; font-family: sans-serif; font-size: 16px; line-height: 1.5;">Leve o <strong>ALBATROZ</strong> no seu bolso! <br>Instale nosso App 🦅</p>
+    
+    <button id="btnInstalarApp" style="width: 100%; background-color: #fff; color: #000; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; margin-bottom: 10px;">
+        Instalar Agora
+    </button>
+    
+    <button id="btnRecusarApp" style="width: 100%; background-color: transparent; color: #aaa; border: none; padding: 10px; cursor: pointer; text-decoration: underline; font-size: 11px;">
+        Agora não
+    </button>
+</div>
+
+<script>
+  let promptDeInstalacao;
+  const areaInstalacao = document.getElementById('container-instalacao');
+  const botaoInstalar = document.getElementById('btnInstalarApp');
+  const botaoRecusar = document.getElementById('btnRecusarApp');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    promptDeInstalacao = e;
+
+    const tempoRecusa = localStorage.getItem('app_recusado_em');
+    const agora = Date.now();
+    const umMinuto = 1 * 60 * 1000; // Define o tempo para 1 minuto
+
+    // Só mostra se nunca recusou ou se já passou 1 minuto da última recusa
+    if (!tempoRecusa || (agora - tempoRecusa > umMinuto)) {
+        iniciarContadorAparecer(5000);
+    }
+  });
+
+  function iniciarContadorAparecer(tempo) {
+    setTimeout(() => {
+      const modoApp = window.matchMedia('(display-mode: standalone)').matches;
+      if (!modoApp && promptDeInstalacao) {
+        areaInstalacao.style.display = 'block';
+      }
+    }, tempo);
+  }
+
+  botaoInstalar.addEventListener('click', () => {
+    if (promptDeInstalacao) {
+      promptDeInstalacao.prompt();
+      promptDeInstalacao.userChoice.then((escolha) => {
+        if (escolha.outcome === 'accepted') {
+          areaInstalacao.style.display = 'none';
+          localStorage.removeItem('app_recusado_em');
+        }
+      });
+    }
+  });
+
+  botaoRecusar.addEventListener('click', () => {
+    areaInstalacao.style.display = 'none';
+    localStorage.setItem('app_recusado_em', Date.now());
+  });
+
+  window.addEventListener('appinstalled', () => {
+    areaInstalacao.style.display = 'none';
+  });
+</script>
+
+    <script>
+        const urlCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJs2mCWo_bv2C7OqYYzuhs_rh8CYfusDhR7UiS4Yj9sUw3C6hNcP6fFlXZOpmAlYZId-jAt8xAC5dM/pub?output=csv";
+        
+        let excluidos = JSON.parse(localStorage.getItem('pedidos_excluidos')) || [];
+        let arquivadosIDs = JSON.parse(localStorage.getItem('pedidos_arquivados')) || [];
+        let impressosAutomaticamente = JSON.parse(localStorage.getItem('pedidos_impressos')) || [];
+
+        // LÓGICA DE BLOQUEIO
+        function iniciarCronometroBloqueio() {
+            if (localStorage.getItem('app_bloqueado') === 'true') {
+                document.getElementById('tela-bloqueio').style.display = 'flex';
+            } else {
+                setTimeout(() => {
+                    localStorage.setItem('app_bloqueado', 'true');
+                    document.getElementById('tela-bloqueio').style.display = 'flex';
+                }, 120000); // 2 minutos (120000 ms)
+            }
+        }
+
+        async function verificarAcesso() {
+            const idDigitado = document.getElementById('login-id').value.trim();
+            const senhaDigitada = document.getElementById('login-senha').value.trim();
+            const erroMsg = document.getElementById('erro-login');
+
+            if (!window.dadosPlanilha) return;
+
+            let acessoPermitido = false;
+            // Percorre as linhas para achar ID (coluna N=13) e Senha (coluna O=14)
+            for (let i = 1; i < window.dadosPlanilha.length; i++) {
+                let idPlanilha = window.dadosPlanilha[i][13] ? window.dadosPlanilha[i][13].replace(/"/g, '').trim() : "";
+                let senhaPlanilha = window.dadosPlanilha[i][14] ? window.dadosPlanilha[i][14].replace(/"/g, '').trim() : "";
+
+                if (idDigitado === idPlanilha && senhaDigitada === senhaPlanilha && idDigitado !== "") {
+                    acessoPermitido = true;
+                    break;
+                }
+            }
+
+            if (acessoPermitido) {
+                localStorage.setItem('app_bloqueado', 'false');
+                document.getElementById('tela-bloqueio').style.display = 'none';
+                erroMsg.innerText = "";
+                // Reinicia o contador para bloquear novamente em 2 min
+                setTimeout(() => {
+                    localStorage.setItem('app_bloqueado', 'true');
+                    document.getElementById('tela-bloqueio').style.display = 'flex';
+                }, 120000);
+            } else {
+                erroMsg.innerText = "ID ou Senha incorretos!";
+            }
+        }
+
+        function tocarSom() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.type = 'sine'; 
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function togglePasta() {
+            const pasta = document.getElementById('lista-arquivados');
+            pasta.style.display = pasta.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function carregarPedidos() {
+            try {
+                const resposta = await fetch(urlCSV + "&t=" + new Date().getTime());
+                const csvText = await resposta.text();
+                const linhas = csvText.split(/\r?\n/).map(linha => {
+                    return linha.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                });
+                
+                window.dadosPlanilha = linhas;
+                const listaPedidosDiv = document.getElementById('lista-pedidos');
+                const listaArquivadosDiv = document.getElementById('lista-arquivados');
+                
+                listaPedidosDiv.innerHTML = "";
+                listaArquivadosDiv.innerHTML = "";
+
+                const labels = ["Data", "Pedido", "Cliente", "Tel", "CEP", "Bairro", "Rua", "Nº", "Tipo", "Taxa", "Total", "Link Pagamento"];
+
+                for (let i = linhas.length - 1; i >= 1; i--) {
+                    let statusImpressao = linhas[i][12] ? linhas[i][12].replace(/"/g, '').trim().toUpperCase() : "";
+
+                    if (statusImpressao === "IMPRIMIR") {
+                        let pedidoHTML = "";
+                        let identificadorUnico = ""; 
+
+                        for(let j=0; j<12; j++) {
+                            if(linhas[i][j]) {
+                                let valor = linhas[i][j].replace(/"/g, '').trim();
+                                if(valor !== "") {
+                                    pedidoHTML += `<strong>${labels[j]}:</strong> ${valor}<br>`;
+                                    identificadorUnico += valor;
+                                }
+                            }
+                        }
+
+                        let pedidoID = i.toString().padStart(6, '0');
+
+                        if (!excluidos.includes(pedidoID)) {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            
+                            if (impressosAutomaticamente.includes(pedidoID)) {
+                                card.classList.add('card-impresso');
+                            }
+
+                            if (arquivadosIDs.includes(pedidoID)) {
+                                card.classList.add('card-arquivado');
+                                card.innerHTML = `
+                                    <button class="btn-excluir" onclick="excluirPedido('${pedidoID}')">Excluir</button>
+                                    <span class="pedido-id-tag">PEDIDO #${pedidoID}</span>
+                                    <h3>Pedido Arquivado</h3>
+                                    <div style="font-size: 14px; line-height: 1.6;">${pedidoHTML}</div>
+                                    <button class="btn-imprimir" onclick="imprimirCard(${i}, '${pedidoID}')">🖨️ REIMPRIMIR</button>
+                                `;
+                                listaArquivadosDiv.appendChild(card);
+                            } else {
+                                card.innerHTML = `
+                                    <button class="btn-excluir" onclick="excluirPedido('${pedidoID}')">Excluir</button>
+                                    <span class="pedido-id-tag">PEDIDO #${pedidoID}</span>
+                                    <h3>${impressosAutomaticamente.includes(pedidoID) ? 'Pedido Impresso' : 'Novo Pedido'}</h3>
+                                    <div style="font-size: 14px; line-height: 1.6;">${pedidoHTML}</div>
+                                    <button class="btn-imprimir" onclick="imprimirCard(${i}, '${pedidoID}')">🖨️ IMPRIMIR CUPOM</button>
+                                    <button class="btn-arquivar" onclick="arquivarPedido('${pedidoID}')">📁 ENVIAR PARA PASTA</button>
+                                `;
+                                listaPedidosDiv.appendChild(card);
+
+                                if (!impressosAutomaticamente.includes(pedidoID)) {
+                                    impressosAutomaticamente.push(pedidoID);
+                                    localStorage.setItem('pedidos_impressos', JSON.stringify(impressosAutomaticamente));
+                                    tocarSom();
+                                    setTimeout(() => { imprimirCard(i, pedidoID); }, 500);
+                                }
+                            }
+                        }
+                    }
+                }
+                document.getElementById('status').innerText = "Atualizado em: " + new Date().toLocaleTimeString();
+            } catch (erro) {
+                console.error("Erro ao ler planilha:", erro);
+                document.getElementById('status').innerText = "Erro ao conectar.";
+            }
+        }
+
+        function arquivarPedido(id) {
+            arquivadosIDs.push(id);
+            localStorage.setItem('pedidos_arquivados', JSON.stringify(arquivadosIDs));
+            carregarPedidos();
+        }
+
+        function limparPasta() {
+            if(confirm("Deseja apagar permanentemente todos os pedidos da pasta?")) {
+                arquivadosIDs = [];
+                localStorage.setItem('pedidos_arquivados', JSON.stringify(arquivadosIDs));
+                carregarPedidos();
+            }
+        }
+
+        function imprimirCard(index, id) {
+            const linha = window.dadosPlanilha[index];
+            if (!linha) return;
+
+            if (id && !impressosAutomaticamente.includes(id)) {
+                impressosAutomaticamente.push(id);
+                localStorage.setItem('pedidos_impressos', JSON.stringify(impressosAutomaticamente));
+                setTimeout(carregarPedidos, 1000); 
+            }
+
+            const labels = ["Data", "Pedido", "Cliente", "Tel", "CEP", "Bairro", "Rua", "Nº", "Tipo", "Taxa", "Total", "Link Pagamento"];
+            let conteudoCupom = "";
+            
+            for(let j=0; j<12; j++) {
+                if(linha[j]) {
+                    let valor = linha[j].replace(/"/g, '').trim();
+                    if(valor !== "") {
+                        conteudoCupom += `<strong>${labels[j]}:</strong> ${valor}<br>`;
+                    }
+                }
+            }
+            const areaPrint = document.getElementById('cupom-print');
+            areaPrint.innerHTML = `<center><strong>SPOOK ICE (#${id})</strong><br>---------------------------<br><strong>CUPOM DE PEDIDO</strong><br>---------------------------</center><div style="text-align:left; font-size: 9pt;">${conteudoCupom}</div>---------------------------<br><center>Obrigado!</center><br>.`;
+            window.print();
+        }
+
+        function excluirPedido(id) {
+            if(confirm("Deseja excluir este pedido?")) {
+                excluidos.push(id);
+                localStorage.setItem('pedidos_excluidos', JSON.stringify(excluidos));
+                carregarPedidos();
+            }
+        }
+
+        setInterval(carregarPedidos, 30000);
+        carregarPedidos();
+        iniciarCronometroBloqueio();
+    </script>
+</body>
+</html>
