@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -777,6 +775,7 @@
 
         function liberarAcesso() {
             logado = true;
+            document.getElementById('overlay-login').style.none = 'none'; // Corrigido para display = 'none' na proxima linha
             document.getElementById('overlay-login').style.display = 'none';
             resetarInatividade();
         }
@@ -803,26 +802,30 @@
                 const data = await response.text();
                 const linhas = data.split('\n');
                 
-                // Varredura completa na planilha para encontrar o par ID e Senha na mesma linha
+                // Percorre todas as linhas da planilha ignorando o cabeçalho
                 for (let i = 1; i < linhas.length; i++) {
                     const colunas = linhas[i].split(',');
+                    // Verifica se a linha tem colunas suficientes
                     if (colunas.length >= 3) {
-                        // Limpa espaços em branco
-                        const planilhaID = colunas[1].trim();
-                        const planilhaPass = colunas[2].trim();
-                        const gerenteID = colunas[3] ? colunas[3].trim() : null;
-                        const gerentePass = colunas[4] ? colunas[4].trim() : null;
+                        let idPlanilha, passPlanilha;
 
                         if (modoAcessoEspecial) {
-                            // Se estiver buscando acesso de Gerente (Histórico)
-                            if (gerenteID === id && gerentePass === pass) return true;
+                            // Para o Histórico (Gerente), busca nas colunas 3 e 4 se existirem, senão 1 e 2
+                            idPlanilha = (colunas[3] || colunas[1]).trim();
+                            passPlanilha = (colunas[4] || colunas[2]).trim();
                         } else {
-                            // Se estiver buscando acesso comum (Entrada no sistema)
-                            if (planilhaID === id && planilhaPass === pass) return true;
+                            // Para o Sistema (Usuário comum), busca nas colunas 1 e 2
+                            idPlanilha = colunas[1].trim();
+                            passPlanilha = colunas[2].trim();
+                        }
+
+                        // Se encontrar uma linha onde ID e Senha batem, retorna verdadeiro
+                        if (idPlanilha === id && passPlanilha === pass) {
+                            return true;
                         }
                     }
                 }
-                return false;
+                return false; // Se percorrer tudo e não achar
             } catch (e) {
                 console.error("Erro ao validar planilha", e);
                 return false;
@@ -1264,3 +1267,4 @@
     </script>
 </body>
 </html>
+
