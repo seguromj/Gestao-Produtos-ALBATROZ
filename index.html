@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -502,6 +503,24 @@
             text-align: center;
         }
 
+        /* Estilo para o olho da senha */
+        .container-senha {
+            position: relative;
+            width: 100%;
+        }
+        .btn-toggle-senha {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 20px;
+            z-index: 10;
+        }
+
         @media (max-width: 800px) {
             .container-topo { flex-direction: column; align-items: center; }
             .menu-principal { grid-template-columns: 1fr; }
@@ -526,7 +545,12 @@
         <p id="msg-login">Verificando credenciais...</p>
         <div id="campos-login" style="display:none; flex-direction:column; gap:10px; width: 80%; max-width:300px;">
             <input type="text" id="login-id" placeholder="ID de Usuário" style="padding:15px; border-radius:8px; border:none;">
-            <input type="password" id="login-senha" placeholder="Senha" style="padding:15px; border-radius:8px; border:none;">
+            
+            <div class="container-senha">
+                <input type="password" id="login-senha" placeholder="Senha" style="padding:15px; border-radius:8px; border:none; width:100%; box-sizing:border-box;">
+                <button type="button" class="btn-toggle-senha" onclick="toggleSenha()">👁️</button>
+            </div>
+
             <button class="btn-main btn-green" id="btn-validar-acesso" onclick="validarAcessoManual()">ENTRAR</button>
             <button class="btn-voltar" style="width:100%; margin:0" onclick="window.location.reload()">VOLTAR</button>
             <a href="https://wa.me/5562995679219?text=Olá, eu esqueci a senha para entrar no sistema Albatroz" class="btn-suporte">SUPORTE</a>
@@ -543,8 +567,8 @@
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="icon-512.png" id="logo-sistema" style="width: 80px; height: 80px; border-radius: 50%;">
                 <div>
-                    <h2 style="margin:0; color: white;">ALBATROZ</h2>
-                    <small style="color: var(--primary);">Suporte: (62) 995679219</small>
+                    <h2 style="margin:0; color: white;">ALBATROZ <strong style="font-size: 11px; color: #002680">PDV</strong></h2>
+                    <small style="color: var(--primary);"><strong style="color: #800000">Suporte:</strong> (62) 995679219</small>
                 </div>
             </div>
 
@@ -662,6 +686,7 @@
                             <th>Total Bruto</th>
                             <th>Taxa %</th>
                             <th>Líquido</th>
+                            <th>Aparelho</th>
                         </tr>
                     </thead>
                     <tbody id="corpo-tabela-vendas"></tbody>
@@ -735,6 +760,62 @@
         let modoAcessoEspecial = false; 
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVGJyIuUPbsSl0S9L51uAijnNMmscOkVz_8taWHyx2yd6i-C7MmANPsID4bihanjGel4peUR4kxsE-/pub?output=csv";
 
+        // --- FUNÇÕES DE IDENTIFICAÇÃO DE DISPOSITIVO AVANÇADA ---
+        function obterIdAparelho() {
+            let id = localStorage.getItem('albatroz_device_id');
+            if(!id) {
+                id = 'ALB-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+                localStorage.setItem('albatroz_device_id', id);
+            }
+            return id;
+        }
+
+        function obterInfoTecnicaAparelho() {
+            const userAgent = navigator.userAgent;
+            const width = window.screen.width;
+            const height = window.screen.height;
+            const idGerado = obterIdAparelho();
+            
+            // Simplificando o UserAgent para facilitar a leitura na planilha
+            let os = "OS Desconhecido";
+            if (userAgent.includes("Android")) os = "Android";
+            else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
+            else if (userAgent.includes("Windows")) os = "Windows";
+            
+            return `${idGerado} (${os} | ${width}x${height})`;
+        }
+
+        // FUNÇÃO PARA MOSTRAR/OCULTAR SENHA
+        function toggleSenha() {
+            const campo = document.getElementById('login-senha');
+            const btn = document.querySelector('.btn-toggle-senha');
+            if (campo.type === 'password') {
+                campo.type = 'text';
+                btn.innerText = '🔒';
+            } else {
+                campo.type = 'password';
+                btn.innerText = '👁️';
+            }
+        }
+
+        function enviarLogParaGoogleForms(usuarioId) {
+            const formURL = "https://docs.google.com/forms/d/e/1FAIpQLScvNN2ww22ZPmF_WCp1pUdS3sxzgtCEpfNUHRlREF8cBAMp2g/formResponse";
+            const infoAparelho = obterInfoTecnicaAparelho();
+            
+            // AGORA ENVIA TAMBÉM O ID DO USUÁRIO QUE ACESSOU
+            const infoCompleta = `USUÁRIO: ${usuarioId} | APARELHO: ${infoAparelho}`;
+            
+            const formData = new FormData();
+            formData.append('entry.865836184', infoCompleta); 
+
+            fetch(formURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: formData
+            }).then(() => console.log("Log enviado: " + infoCompleta))
+              .catch(e => console.error("Erro ao enviar log", e));
+        }
+
         function resetarInatividade() {
             clearTimeout(tempoInatividade);
             tempoInatividade = setTimeout(bloquearSistema, 60000); 
@@ -788,6 +869,9 @@
                 if(!modoAcessoEspecial) {
                     localStorage.setItem('login_albatroz_id', id);
                     localStorage.setItem('login_albatroz_pass', pass);
+                    
+                    // ENVIO DAS INFORMAÇÕES TÉCNICAS NO LOGIN (COM ID DO USUÁRIO)
+                    enviarLogParaGoogleForms(id);
                 }
                 liberarAcesso();
             } else {
@@ -799,14 +883,10 @@
             try {
                 const response = await fetch(URL_PLANILHA + "&t=" + new Date().getTime());
                 const data = await response.text();
-                // Divide por linhas e remove linhas vazias
                 const linhas = data.split(/\r?\n/).filter(line => line.trim() !== "");
                 
                 for (let i = 1; i < linhas.length; i++) {
-                    // Tenta dividir por vírgula ou ponto e vírgula
                     let colunas = linhas[i].includes(';') ? linhas[i].split(';') : linhas[i].split(',');
-                    
-                    // Limpa aspas e espaços de cada coluna
                     colunas = colunas.map(col => col.replace(/^"|"$/g, '').trim());
 
                     if (colunas.length >= 3) {
@@ -814,11 +894,9 @@
                         let passPlanilha = "";
 
                         if (modoAcessoEspecial) {
-                            // Prioriza colunas 3 e 4 para Gerente, senão usa 1 e 2
                             idPlanilha = (colunas[3] || colunas[1]);
                             passPlanilha = (colunas[4] || colunas[2]);
                         } else {
-                            // Usuário comum colunas 1 e 2
                             idPlanilha = colunas[1];
                             passPlanilha = colunas[2];
                         }
@@ -1078,7 +1156,8 @@
                     tipo: metodo,
                     valorTotal: produtos[pIndex].valor * qtdBaixa,
                     itens: [{nome: produtos[pIndex].nome, qtd: qtdBaixa, valor: produtos[pIndex].valor}],
-                    taxa: 0
+                    taxa: 0,
+                    aparelho: obterInfoTecnicaAparelho()
                 });
                 localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
@@ -1116,7 +1195,8 @@
                     tipo: metodo,
                     valorTotal: totalGeralVenda,
                     itens: itensVendidos,
-                    taxa: 0
+                    taxa: 0,
+                    aparelho: obterInfoTecnicaAparelho()
                 });
                 localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
@@ -1211,6 +1291,7 @@
                             ${v.tipo === 'Cartão' ? `<input type="number" value="${taxa}" style="width:40px; font-size:10px;" onchange="atualizarTaxaVenda(${index}, this.value)">` : '0'}%
                         </td>
                         <td style="color:var(--success); font-weight:bold">R$ ${liquido.toFixed(2)}</td>
+                        <td style="font-size:9px">${v.aparelho || 'N/A'}</td>
                     </tr>`;
             });
 
