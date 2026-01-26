@@ -803,16 +803,23 @@
                 const data = await response.text();
                 const linhas = data.split('\n');
                 
+                // Varredura completa na planilha para encontrar o par ID e Senha na mesma linha
                 for (let i = 1; i < linhas.length; i++) {
                     const colunas = linhas[i].split(',');
-                    if (colunas.length >= 5) {
+                    if (colunas.length >= 3) {
+                        // Limpa espaços em branco
+                        const planilhaID = colunas[1].trim();
+                        const planilhaPass = colunas[2].trim();
+                        const gerenteID = colunas[3] ? colunas[3].trim() : null;
+                        const gerentePass = colunas[4] ? colunas[4].trim() : null;
+
                         if (modoAcessoEspecial) {
-                            if (colunas[3].trim() === id && colunas[4].trim() === pass) return true;
+                            // Se estiver buscando acesso de Gerente (Histórico)
+                            if (gerenteID === id && gerentePass === pass) return true;
                         } else {
-                            if (colunas[1].trim() === id && colunas[2].trim() === pass) return true;
+                            // Se estiver buscando acesso comum (Entrada no sistema)
+                            if (planilhaID === id && planilhaPass === pass) return true;
                         }
-                    } else if (colunas.length >= 3 && !modoAcessoEspecial) {
-                        if (colunas[1].trim() === id && colunas[2].trim() === pass) return true;
                     }
                 }
                 return false;
@@ -1257,4 +1264,3 @@
     </script>
 </body>
 </html>
-
