@@ -2,7 +2,6 @@
 {
   "name": "Sistema Albatroz",
   "short_name": "Albatroz",
-  "description": "Sistema de Gestão e PDV Albatroz",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",
