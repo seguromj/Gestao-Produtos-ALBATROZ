@@ -1,18 +1,23 @@
 
-{
-  "name": "Sistema Albatroz",
-  "short_name": "Albatroz",
-  "description": "Sistema de Gestão e PDV Albatroz",
-  "start_url": "index.html",
-  "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#007bff",
-  "icons": [
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
-}
+const CACHE_NAME = 'albatroz-v1';
+const assets = [
+  './',
+  './index.html',
+  './manifest.json'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(assets);
+    })
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
+  );
+});
