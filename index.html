@@ -620,12 +620,14 @@
                 </div>
             </div>
             <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning);">
-                <span style="font-size: 14px; color: #aaa;">LUCRO NAS ÚLTIMAS 24H:</span><br>
-                <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span>
+                <span style="font-size: 14px; color: #aaa;">Ganhos de Hoje:</span><br>
+                <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span><br>
+                <span id="taxa-maquina-dia" style="font-size: 12px; color: var(--danger);">Taxa Máquina: R$ 0,00</span>
             </div>
             <div id="resumo-lucro-total" style="width: 100%; text-align: center; background: #222; padding: 10px; border-radius: 10px; border: 1px solid var(--success); margin-top: -10px;">
-                <span style="font-size: 12px; color: #aaa;">LUCRO TOTAL ACUMULADO:</span><br>
-                <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span>
+                <span style="font-size: 12px; color: #aaa;">Lucro Acumulado</span><br>
+                <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span><br>
+                <span id="taxa-maquina-total" style="font-size: 11px; color: var(--danger);">Taxa Máquina Total: R$ 0,00</span>
             </div>
             <div style="width: 100%; overflow-x: auto;">
                 <table class="tabela-vendas">
@@ -1124,10 +1126,14 @@
             const corpoTabela = document.getElementById('corpo-tabela-vendas');
             const displayLucroDia = document.getElementById('valor-lucro-dia');
             const displayLucroTotal = document.getElementById('valor-lucro-total');
+            const displayTaxaDia = document.getElementById('taxa-maquina-dia');
+            const displayTaxaTotal = document.getElementById('taxa-maquina-total');
             corpoTabela.innerHTML = "";
             
             let lucroTotal = 0;
             let lucroDia = 0;
+            let taxaTotalAcumulada = 0;
+            let taxaDiaAcumulada = 0;
             let totPix = 0;
             let totDinheiro = 0;
             let totCartao = 0;
@@ -1139,11 +1145,15 @@
             vendasRealizadas.forEach((v, index) => {
                 const bruto = parseFloat(v.valorTotal);
                 const taxa = v.taxa || 0;
-                const liquido = bruto - (bruto * (taxa / 100));
+                const valorDaTaxa = bruto * (taxa / 100);
+                const liquido = bruto - valorDaTaxa;
                 
                 lucroTotal += liquido;
+                taxaTotalAcumulada += valorDaTaxa;
+
                 if (agora - v.timestamp < vinteQuatroHoras) {
                     lucroDia += liquido;
+                    taxaDiaAcumulada += valorDaTaxa;
                     if(v.tipo === "Pix") totPix += liquido;
                     else if(v.tipo === "Dinheiro") totDinheiro += liquido;
                     else if(v.tipo === "Cartão") totCartao += liquido;
@@ -1182,6 +1192,8 @@
             document.getElementById('dash-top').innerText = topProd;
             displayLucroDia.innerText = `R$ ${lucroDia.toFixed(2)}`;
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
+            displayTaxaDia.innerText = `Taxa Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
+            displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
         }
 
         function atualizarTaxaVenda(index, valor) {
@@ -1229,3 +1241,4 @@
     </script>
 </body>
 </html>
+
