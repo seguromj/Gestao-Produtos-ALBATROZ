@@ -45,6 +45,30 @@
             min-height: 100vh;
         }
 
+        /*sistema para baixar o app*/
+        /* Estilo do Banner de Instalação PWA */
+#container-instalacao {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: var(--card);
+    border: 2px solid var(--primary);
+    border-radius: 15px;
+    padding: 15px;
+    z-index: 9999;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    text-align: center;
+}
+#container-instalacao h3 { margin: 0 0 10px 0; color: var(--primary); }
+#container-instalacao p { font-size: 14px; margin-bottom: 15px; }
+.botoes-pwa { display: flex; gap: 10px; }
+.btn-pwa { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        
         /* --- NOVOS ESTILOS PARA ORGANIZAÇÃO E VISUALIZAÇÃO --- */
         .container-topo {
             width: 95%;
@@ -497,6 +521,16 @@
     </style>
 </head>
 <body onclick="resetarInatividade()" onkeydown="resetarInatividade()">
+    <!--Sistema para instalar app-->
+    <div id="container-instalacao">
+    <h3>Instalar Albatroz</h3>
+    <p>Deseja instalar este sistema como um aplicativo no seu celular?</p>
+    <div class="botoes-pwa">
+        <button id="btnInstalarApp" class="btn-pwa btn-green">INSTALAR</button>
+        <button id="btnRecusarApp" class="btn-pwa btn-vermelho">AGORA NÃO</button>
+    </div>
+    </div>
+    <!--☝️Sistema para instalar app☝️-->
 
     <div id="overlay-login">
         <h2 id="titulo-bloqueio">🔒 SISTEMA BLOQUEADO</h2>
@@ -1241,4 +1275,5 @@
     </script>
 </body>
 </html>
+
 
