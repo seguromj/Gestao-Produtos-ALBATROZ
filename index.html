@@ -193,8 +193,7 @@
             max-width: 500px;
             margin: 10px auto;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            flex-direction: column; gap: 8px;
             overflow-y: auto; 
         }
 
@@ -632,11 +631,12 @@
                 <table class="tabela-vendas">
                     <thead>
                         <tr>
-                            <th>Data</th>
-                            <th>Produto</th>
-                            <th>Qtd</th>
-                            <th>Tipo</th>
-                            <th>Total</th>
+                            <th>Data/Hora</th>
+                            <th>Itens</th>
+                            <th>Metodo</th>
+                            <th>Total Bruto</th>
+                            <th>Taxa %</th>
+                            <th>Líquido</th>
                         </tr>
                     </thead>
                     <tbody id="corpo-tabela-vendas"></tbody>
@@ -1044,7 +1044,9 @@
                     nome: produtos[pIndex].nome || "Produto",
                     qtd: qtdBaixa,
                     tipo: metodo,
-                    valorTotal: produtos[pIndex].valor * qtdBaixa
+                    valorTotal: produtos[pIndex].valor * qtdBaixa,
+                    itens: [{nome: produtos[pIndex].nome, qtd: qtdBaixa, valor: produtos[pIndex].valor}],
+                    taxa: 0
                 });
                 localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 localStorage.setItem('meus_produtos', JSON.stringify(produtos));
@@ -1057,29 +1059,42 @@
         function baixaGeral() {
             if(!confirm("Deseja dar baixa geral?")) return;
             const metodo = document.getElementById('metodo-pagamento').value;
+            let itensVendidos = [];
+            let totalGeralVenda = 0;
+
             historico.forEach((item, index) => {
                 const qtdBaixa = parseInt(document.getElementById(`baixa-${index}`).value);
                 const pIndex = produtos.findIndex(p => p.id === item.id);
                 if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
                     produtos[pIndex].qtd -= qtdBaixa;
-                    vendasRealizadas.unshift({
-                        data: new Date().toLocaleString(),
-                        timestamp: new Date().getTime(),
+                    const subtotal = produtos[pIndex].valor * qtdBaixa;
+                    totalGeralVenda += subtotal;
+                    itensVendidos.push({
                         nome: produtos[pIndex].nome || "Produto",
                         qtd: qtdBaixa,
-                        tipo: metodo,
-                        valorTotal: produtos[pIndex].valor * qtdBaixa
+                        valor: produtos[pIndex].valor
                     });
                 }
             });
-            localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
-            localStorage.setItem('meus_produtos', JSON.stringify(produtos));
-            historico = [];
-            localStorage.setItem('meu_historico', JSON.stringify(historico));
-            document.getElementById('valor-recebido').value = "";
-            atualizarLista();
-            atualizarVisualizacaoHome();
-            alert("Baixa geral concluída!");
+
+            if(itensVendidos.length > 0) {
+                vendasRealizadas.unshift({
+                    data: new Date().toLocaleString(),
+                    timestamp: new Date().getTime(),
+                    tipo: metodo,
+                    valorTotal: totalGeralVenda,
+                    itens: itensVendidos,
+                    taxa: 0
+                });
+                localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+                localStorage.setItem('meus_produtos', JSON.stringify(produtos));
+                historico = [];
+                localStorage.setItem('meu_historico', JSON.stringify(historico));
+                document.getElementById('valor-recebido').value = "";
+                atualizarLista();
+                atualizarVisualizacaoHome();
+                alert("Baixa geral concluída!");
+            }
         }
 
         function limparFormProd() {
@@ -1121,26 +1136,58 @@
             const agora = new Date().getTime();
             const vinteQuatroHoras = 24 * 60 * 60 * 1000;
 
-            vendasRealizadas.forEach(v => {
-                const valor = parseFloat(v.valorTotal);
-                lucroTotal += valor;
+            vendasRealizadas.forEach((v, index) => {
+                const bruto = parseFloat(v.valorTotal);
+                const taxa = v.taxa || 0;
+                const liquido = bruto - (bruto * (taxa / 100));
+                
+                lucroTotal += liquido;
                 if (agora - v.timestamp < vinteQuatroHoras) {
-                    lucroDia += valor;
-                    if(v.tipo === "Pix") totPix += valor;
-                    else if(v.tipo === "Dinheiro") totDinheiro += valor;
-                    else if(v.tipo === "Cartão") totCartao += valor;
+                    lucroDia += liquido;
+                    if(v.tipo === "Pix") totPix += liquido;
+                    else if(v.tipo === "Dinheiro") totDinheiro += liquido;
+                    else if(v.tipo === "Cartão") totCartao += liquido;
                 }
-                contagemProdutos[v.nome] = (contagemProdutos[v.nome] || 0) + v.qtd;
-                corpoTabela.innerHTML += `<tr><td>${v.data.split(',')[0]}</td><td>${v.nome}</td><td>${v.qtd}</td><td>${v.tipo}</td><td style="color:var(--success)">R$ ${valor.toFixed(2)}</td></tr>`;
+                
+                // Contagem para Top Produto
+                if(v.itens) {
+                    v.itens.forEach(item => {
+                        contagemProdutos[item.nome] = (contagemProdutos[item.nome] || 0) + item.qtd;
+                    });
+                } else if(v.nome) {
+                     contagemProdutos[v.nome] = (contagemProdutos[v.nome] || 0) + v.qtd;
+                }
+
+                const listaItensHtml = v.itens ? v.itens.map(i => `${i.qtd}x ${i.nome}`).join('<br>') : (v.nome || '---');
+
+                corpoTabela.innerHTML += `
+                    <tr>
+                        <td>${v.data}</td>
+                        <td>
+                            <button onclick="alert('${listaItensHtml.replace(/<br>/g, '\\n')}')" style="font-size:10px; cursor:pointer">VER ITENS</button>
+                        </td>
+                        <td>${v.tipo}</td>
+                        <td>R$ ${bruto.toFixed(2)}</td>
+                        <td>
+                            ${v.tipo === 'Cartão' ? `<input type="number" value="${taxa}" style="width:40px; font-size:10px;" onchange="atualizarTaxaVenda(${index}, this.value)">` : '0'}%
+                        </td>
+                        <td style="color:var(--success); font-weight:bold">R$ ${liquido.toFixed(2)}</td>
+                    </tr>`;
             });
 
             document.getElementById('dash-pix').innerText = `R$ ${totPix.toFixed(2)}`;
             document.getElementById('dash-dinheiro').innerText = `R$ ${totDinheiro.toFixed(2)}`;
             document.getElementById('dash-cartao').innerText = `R$ ${totCartao.toFixed(2)}`;
-            let topProd = Object.keys(contagemProdutos).reduce((a, b) => contagemProdutos[a] > contagemProdutos[b] ? a : b, "---");
+            let topProd = Object.keys(contagemProdutos).length > 0 ? Object.keys(contagemProdutos).reduce((a, b) => contagemProdutos[a] > contagemProdutos[b] ? a : b) : "---";
             document.getElementById('dash-top').innerText = topProd;
             displayLucroDia.innerText = `R$ ${lucroDia.toFixed(2)}`;
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
+        }
+
+        function atualizarTaxaVenda(index, valor) {
+            vendasRealizadas[index].taxa = parseFloat(valor) || 0;
+            localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
+            renderizarHistoricoVendas();
         }
 
         function limparHistoricoVendasComSenha() {
@@ -1182,6 +1229,3 @@
     </script>
 </body>
 </html>
-
-
-
