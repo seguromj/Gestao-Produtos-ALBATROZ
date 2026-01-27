@@ -84,8 +84,7 @@
             flex: 1;
             min-width: 320px;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            flex-direction: column; gap: 20px;
         }
 
         .coluna-direita {
@@ -559,7 +558,19 @@
             .coluna-esquerda, .coluna-direita { width: 100%; }
         }
 
-        /* Estilos adicionados para visualização prévia */
+        /* Estilos para modo visualização prévia da nota */
+        .preview-modo-profissional .input-link-qr,
+        .preview-modo-profissional .cupom-input-calc,
+        .preview-modo-profissional textarea,
+        .preview-modo-profissional .toggle-cupom-label,
+        .preview-modo-profissional span:has(.cupom-input-calc) {
+            display: none !important;
+        }
+        
+        .preview-modo-profissional .texto-valor-limpo {
+            display: inline-block !important;
+        }
+
         .cupom-preview-mode {
             transform: scale(0.9);
             border: 2px solid var(--primary);
@@ -711,12 +722,21 @@
                     <p id="dash-top" style="font-size:12px; color:var(--warning)">---</p>
                 </div>
             </div>
+            
             <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning); position: relative;">
                 <button onclick="limparGanhosHoje()" style="position: absolute; right: 10px; top: 10px; background: var(--danger); border: none; color: white; border-radius: 5px; cursor: pointer; font-size: 10px; padding: 5px;">ZERAR HOJE</button>
-                <span style="font-size: 14px; color: #aaa;">Ganhos de Hoje:</span><br>
+                
+                <span style="font-size: 14px; color: #aaa;">Total Bruto Hoje:</span><br>
+                <span id="valor-bruto-dia" style="font-size: 18px; font-weight: bold; color: #fff;">R$ 0,00</span><br>
+                
+                <span style="font-size: 14px; color: #aaa; margin-top: 5px; display: inline-block;">Ganhos Líquidos Hoje:</span><br>
                 <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span><br>
-                <span id="taxa-maquina-dia" style="font-size: 12px; color: var(--danger);">Taxa Máquina: R$ 0,00</span>
+                
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 5px;">
+                    <span id="taxa-maquina-dia" style="font-size: 12px; color: var(--danger);">Perda p/ Máquina: R$ 0,00</span>
+                </div>
             </div>
+
             <div id="resumo-lucro-total" style="width: 100%; text-align: center; background: #222; padding: 10px; border-radius: 10px; border: 1px solid var(--success); margin-top: -10px;">
                 <span style="font-size: 12px; color: #aaa;">Lucro Acumulado</span><br>
                 <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span><br>
@@ -779,7 +799,8 @@
                 </div>
                 <div class="linha-total">
                     <span>VALOR RECEBIDO:</span>
-                    <span>R$ <input type="number" id="cupom-calc-recebido" class="cupom-input-calc" value="0.00" oninput="calcularTrocoCupom()"></span>
+                    <span>R$ <input type="number" id="cupom-calc-recebido" class="cupom-input-calc" value="0.00" oninput="calcularTrocoCupom()">
+                    <span class="texto-valor-limpo" id="cupom-recebido-limpo" style="display:none">0.00</span></span>
                 </div>
                 <div class="linha-total">
                     <span>TROCO:</span>
@@ -802,7 +823,7 @@
                    <button class="btn-main btn-blue" style="flex: 1; padding: 8px; font-size: 10px;" onclick="window.print()">🖨️ IMPRIMIR</button>
                    <button class="btn-main btn-vermelho" style="flex: 1; padding: 8px; font-size: 10px;" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
                 </div>
-                <button class="btn-main" style="background: #6c757d; color: white; padding: 8px; font-size: 12px; width: 100%;" onclick="togglePreviewCupom()">👁️ VER PRÉVIA DA NOTA</button>
+                <button class="btn-main" id="btn-toggle-preview" style="background: #6c757d; color: white; padding: 8px; font-size: 12px; width: 100%;" onclick="togglePreviewCupom()">👁️ VER PRÉVIA DA NOTA</button>
             </div>
         </div>
     </div>
@@ -1367,13 +1388,18 @@
         function renderizarHistoricoVendas() {
             const corpoTabela = document.getElementById('corpo-tabela-vendas');
             const displayLucroDia = document.getElementById('valor-lucro-dia');
+            const displayBrutoDia = document.getElementById('valor-bruto-dia');
             const displayLucroTotal = document.getElementById('valor-lucro-total');
             const displayTaxaDia = document.getElementById('taxa-maquina-dia');
             const displayTaxaTotal = document.getElementById('taxa-maquina-total');
             corpoTabela.innerHTML = "";
             
+            let brutoTotalGeral = 0;
             let lucroTotal = 0;
+            
+            let brutoDia = 0;
             let lucroDia = 0;
+            
             let taxaTotalAcumulada = 0;
             let taxaDiaAcumulada = 0;
             let totPix = 0;
@@ -1395,6 +1421,7 @@
                 taxaTotalAcumulada += valorDaTaxa;
                 
                 if (agora - v.timestamp < vinteQuatroHoras && v.timestamp > timestampReset) {
+                    brutoDia += bruto;
                     lucroDia += liquido;
                     taxaDiaAcumulada += valorDaTaxa;
                     if(v.tipo === "Pix") totPix += liquido;
@@ -1434,9 +1461,11 @@
             document.getElementById('dash-cartao').innerText = `R$ ${totCartao.toFixed(2)}`;
             let topProd = Object.keys(contagemProdutos).length > 0 ? Object.keys(contagemProdutos).reduce((a, b) => contagemProdutos[a] > contagemProdutos[b] ? a : b) : "---";
             document.getElementById('dash-top').innerText = topProd;
+            
+            displayBrutoDia.innerText = `R$ ${brutoDia.toFixed(2)}`;
             displayLucroDia.innerText = `R$ ${lucroDia.toFixed(2)}`;
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
-            displayTaxaDia.innerText = `Taxa Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
+            displayTaxaDia.innerText = `Perda p/ Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
             displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
         }
 
@@ -1453,7 +1482,22 @@
 
         function togglePreviewCupom() {
             const cupom = document.querySelector('.cupom-container');
-            cupom.classList.toggle('cupom-preview-mode');
+            const btn = document.getElementById('btn-toggle-preview');
+            const inputRec = document.getElementById('cupom-calc-recebido');
+            const txtRec = document.getElementById('cupom-recebido-limpo');
+            
+            cupom.classList.toggle('preview-modo-profissional');
+            
+            if(cupom.classList.contains('preview-modo-profissional')) {
+                btn.innerText = "✏️ EDITAR NOTA";
+                txtRec.innerText = parseFloat(inputRec.value).toFixed(2);
+                txtRec.style.display = "inline-block";
+                inputRec.style.display = "none";
+            } else {
+                btn.innerText = "👁️ VER PRÉVIA DA NOTA";
+                txtRec.style.display = "none";
+                inputRec.style.display = "inline-block";
+            }
         }
 
         // --- FUNÇÃO DO CUPOM (NOTA NÃO FISCAL) ---
@@ -1477,6 +1521,13 @@
                         </tr>`;
                 });
             }
+
+            // Reseta para modo edição ao abrir
+            const cupom = document.querySelector('.cupom-container');
+            cupom.classList.remove('preview-modo-profissional');
+            document.getElementById('btn-toggle-preview').innerText = "👁️ VER PRÉVIA DA NOTA";
+            document.getElementById('cupom-calc-recebido').style.display = "inline-block";
+            document.getElementById('cupom-recebido-limpo').style.display = "none";
 
             document.getElementById('cupom-calc-recebido').value = "0.00";
             document.getElementById('cupom-calc-troco').innerText = "R$ 0,00";
@@ -1577,3 +1628,4 @@
     </script>
 </body>
 </html>
+
