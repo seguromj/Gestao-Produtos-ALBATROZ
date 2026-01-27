@@ -563,11 +563,13 @@
         .preview-modo-profissional .cupom-input-calc,
         .preview-modo-profissional textarea,
         .preview-modo-profissional .toggle-cupom-label,
+        .preview-modo-profissional .select-metodo-cupom,
         .preview-modo-profissional span:has(.cupom-input-calc) {
             display: none !important;
         }
         
-        .preview-modo-profissional .texto-valor-limpo {
+        .preview-modo-profissional .texto-valor-limpo,
+        .preview-modo-profissional #cupom-obs-texto {
             display: inline-block !important;
         }
 
@@ -580,7 +582,17 @@
             body * { visibility: hidden; }
             #modalDetalhesVenda, #modalDetalhesVenda * { visibility: visible; }
             #modalDetalhesVenda { position: absolute; left: 0; top: 0; background: white; }
-            .btn-main, .input-link-qr, .cupom-input-calc, textarea, .toggle-cupom-label { display: none !important; }
+            .btn-main, .input-link-qr, .cupom-input-calc, textarea, .toggle-cupom-label, .select-metodo-cupom { display: none !important; }
+            #cupom-obs-texto { display: block !important; }
+        }
+
+        .select-metodo-cupom {
+            width: 100%;
+            padding: 5px;
+            font-family: inherit;
+            font-size: 12px;
+            margin-bottom: 5px;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
@@ -738,7 +750,10 @@
             </div>
 
             <div id="resumo-lucro-total" style="width: 100%; text-align: center; background: #222; padding: 10px; border-radius: 10px; border: 1px solid var(--success); margin-top: -10px;">
-                <span style="font-size: 12px; color: #aaa;">Lucro Acumulado</span><br>
+                <span style="font-size: 12px; color: #aaa;">Bruto Acumulado</span><br>
+                <span id="valor-bruto-total-acumulado" style="font-size: 18px; font-weight: bold; color: var(--warning);">R$ 0,00</span><br>
+                <hr style="border: 0.5px solid #333; width: 50%;">
+                <span style="font-size: 12px; color: #aaa;">Lucro Acumulado (Líquido)</span><br>
                 <span id="valor-lucro-total" style="font-size: 18px; font-weight: bold; color: var(--success);">R$ 0,00</span><br>
                 <span id="taxa-maquina-total" style="font-size: 11px; color: var(--danger);">Taxa Máquina Total: R$ 0,00</span>
             </div>
@@ -780,6 +795,14 @@
             <div class="cupom-info">
                 ID DA NOTA: <span id="cupom-id-nota"></span><br>
                 DATA/HORA: <span id="cupom-data"></span><br>
+                <div style="margin-top: 5px;">
+                    <select id="cupom-metodo-pagamento-seletor" class="select-metodo-cupom" onchange="mudarMetodoCupom(this.value)">
+                        <option value="Dinheiro">💵 Dinheiro</option>
+                        <option value="Pix">📱 Pix</option>
+                        <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+                        <option value="Cartão de Débito">💳 Cartão de Débito</option>
+                    </select>
+                </div>
                 PAGAMENTO: <span id="cupom-pagamento"></span>
             </div>
             <table class="cupom-tabela">
@@ -794,15 +817,15 @@
             </table>
             <div class="cupom-totais">
                 <div class="linha-total">
-                    <span>TOTAL DOS PRODUTOS:</span>
+                    <span>VALOR TOTAL:</span>
                     <span id="cupom-total-bruto">R$ 0,00</span>
                 </div>
-                <div class="linha-total">
+                <div class="linha-total" id="linha-recebido-cupom">
                     <span>VALOR RECEBIDO:</span>
                     <span>R$ <input type="number" id="cupom-calc-recebido" class="cupom-input-calc" value="0.00" oninput="calcularTrocoCupom()">
                     <span class="texto-valor-limpo" id="cupom-recebido-limpo" style="display:none">0.00</span></span>
                 </div>
-                <div class="linha-total">
+                <div class="linha-total" id="linha-troco-cupom">
                     <span>TROCO:</span>
                     <span id="cupom-calc-troco">R$ 0,00</span>
                 </div>
@@ -811,7 +834,8 @@
             <input type="text" id="cupom-link-qr" class="input-link-qr" placeholder="Link para o QR Code" oninput="gerarQRCodeCupom(this.value)">
             <div class="cupom-footer">
                 <p>Obrigado pela Preferência.<br>Volte Sempre.</p>
-                <textarea id="cupom-obs" style="width: 100%; font-family: inherit; font-size: 11px; border: 1px dotted #000; height: 40px;" placeholder="Digite algo aqui..."></textarea>
+                <textarea id="cupom-obs" style="width: 100%; font-family: inherit; font-size: 11px; border: 1px dotted #000; height: 40px;" placeholder="Digite algo aqui..." oninput="document.getElementById('cupom-obs-texto').innerText = this.value"></textarea>
+                <div id="cupom-obs-texto" style="display:none; font-size: 11px; text-align: center; margin-top: 5px; white-space: pre-wrap;"></div>
             </div>
             
             <div class="toggle-cupom-label" style="margin-top: 10px; font-size: 11px; color: #333; display: flex; align-items: center; gap: 5px;">
@@ -1390,11 +1414,12 @@
             const displayLucroDia = document.getElementById('valor-lucro-dia');
             const displayBrutoDia = document.getElementById('valor-bruto-dia');
             const displayLucroTotal = document.getElementById('valor-lucro-total');
+            const displayBrutoTotalAcumulado = document.getElementById('valor-bruto-total-acumulado');
             const displayTaxaDia = document.getElementById('taxa-maquina-dia');
             const displayTaxaTotal = document.getElementById('taxa-maquina-total');
             corpoTabela.innerHTML = "";
             
-            let brutoTotalGeral = 0;
+            let brutoTotalGeralAcumulado = 0;
             let lucroTotal = 0;
             
             let brutoDia = 0;
@@ -1417,6 +1442,7 @@
                 const valorDaTaxa = bruto * (taxa / 100);
                 const liquido = bruto - valorDaTaxa;
                 
+                brutoTotalGeralAcumulado += bruto;
                 lucroTotal += liquido;
                 taxaTotalAcumulada += valorDaTaxa;
                 
@@ -1426,7 +1452,7 @@
                     taxaDiaAcumulada += valorDaTaxa;
                     if(v.tipo === "Pix") totPix += liquido;
                     else if(v.tipo === "Dinheiro") totDinheiro += liquido;
-                    else if(v.tipo === "Cartão") totCartao += liquido;
+                    else if(v.tipo === "Cartão" || v.tipo.includes("Cartão")) totCartao += liquido;
                 }
                 
                 if(v.itens) {
@@ -1443,13 +1469,12 @@
                         <td>
                             <div style="display:flex; gap:2px">
                                 <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER NOTA</button>
-                                <button onclick="abrirModalValorBruto(${bruto})" style="font-size:10px; cursor:pointer; background: var(--warning); color: black; border:none; padding: 4px; border-radius:4px;">BRUTO</button>
                             </div>
                         </td>
                         <td>${v.tipo}</td>
                         <td>R$ ${bruto.toFixed(2)}</td>
                         <td>
-                            ${v.tipo === 'Cartão' ? `<input type="number" value="${taxa}" style="width:40px; font-size:10px;" onchange="atualizarTaxaVenda(${index}, this.value)">` : '0'}%
+                            ${(v.tipo === 'Cartão' || v.tipo.includes('Cartão')) ? `<input type="number" value="${taxa}" style="width:40px; font-size:10px;" onchange="atualizarTaxaVenda(${index}, this.value)">` : '0'}%
                         </td>
                         <td style="color:var(--success); font-weight:bold">R$ ${liquido.toFixed(2)}</td>
                         <td style="font-size:9px">${v.aparelho || 'N/A'}</td>
@@ -1465,6 +1490,7 @@
             displayBrutoDia.innerText = `R$ ${brutoDia.toFixed(2)}`;
             displayLucroDia.innerText = `R$ ${lucroDia.toFixed(2)}`;
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
+            displayBrutoTotalAcumulado.innerText = `R$ ${brutoTotalGeralAcumulado.toFixed(2)}`;
             displayTaxaDia.innerText = `Perda p/ Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
             displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
         }
@@ -1485,6 +1511,8 @@
             const btn = document.getElementById('btn-toggle-preview');
             const inputRec = document.getElementById('cupom-calc-recebido');
             const txtRec = document.getElementById('cupom-recebido-limpo');
+            const obsTextarea = document.getElementById('cupom-obs');
+            const obsDisplay = document.getElementById('cupom-obs-texto');
             
             cupom.classList.toggle('preview-modo-profissional');
             
@@ -1493,10 +1521,14 @@
                 txtRec.innerText = parseFloat(inputRec.value).toFixed(2);
                 txtRec.style.display = "inline-block";
                 inputRec.style.display = "none";
+                obsDisplay.style.display = "block";
+                obsTextarea.style.display = "none";
             } else {
                 btn.innerText = "👁️ VER PRÉVIA DA NOTA";
                 txtRec.style.display = "none";
                 inputRec.style.display = "inline-block";
+                obsDisplay.style.display = "none";
+                obsTextarea.style.display = "block";
             }
         }
 
@@ -1505,7 +1537,17 @@
             const venda = vendasRealizadas[index];
             document.getElementById('cupom-id-nota').innerText = venda.idVenda || 'N/A';
             document.getElementById('cupom-data').innerText = venda.data;
-            document.getElementById('cupom-pagamento').innerText = venda.tipo;
+            
+            // Setar o seletor baseado no tipo que veio da venda
+            const seletorMetodo = document.getElementById('cupom-metodo-pagamento-seletor');
+            if (venda.tipo === "Dinheiro") seletorMetodo.value = "Dinheiro";
+            else if (venda.tipo === "Pix") seletorMetodo.value = "Pix";
+            else if (venda.tipo.includes("Crédito")) seletorMetodo.value = "Cartão de Crédito";
+            else if (venda.tipo.includes("Débito")) seletorMetodo.value = "Cartão de Débito";
+            else seletorMetodo.value = "Dinheiro"; // Default
+
+            mudarMetodoCupom(seletorMetodo.value);
+            
             document.getElementById('cupom-total-bruto').innerText = `R$ ${parseFloat(venda.valorTotal).toFixed(2)}`;
             
             const corpo = document.getElementById('cupom-corpo-itens');
@@ -1528,10 +1570,36 @@
             document.getElementById('btn-toggle-preview').innerText = "👁️ VER PRÉVIA DA NOTA";
             document.getElementById('cupom-calc-recebido').style.display = "inline-block";
             document.getElementById('cupom-recebido-limpo').style.display = "none";
+            document.getElementById('cupom-obs-texto').style.display = "none";
+            document.getElementById('cupom-obs').style.display = "block";
 
             document.getElementById('cupom-calc-recebido').value = "0.00";
             document.getElementById('cupom-calc-troco').innerText = "R$ 0,00";
             document.getElementById('modalDetalhesVenda').style.display = 'flex';
+        }
+
+        function mudarMetodoCupom(metodo) {
+            const labelPagamento = document.getElementById('cupom-pagamento');
+            const linhaRecebido = document.getElementById('linha-recebido-cupom');
+            const linhaTroco = document.getElementById('linha-troco-cupom');
+
+            if (metodo === "Dinheiro") {
+                labelPagamento.innerText = "Dinheiro";
+                linhaRecebido.style.display = "flex";
+                linhaTroco.style.display = "flex";
+            } else if (metodo === "Pix") {
+                labelPagamento.innerText = "Pagamento via Pix";
+                linhaRecebido.style.display = "none";
+                linhaTroco.style.display = "none";
+            } else if (metodo === "Cartão de Crédito") {
+                labelPagamento.innerText = "Pagamento via Cartão de Crédito";
+                linhaRecebido.style.display = "none";
+                linhaTroco.style.display = "none";
+            } else if (metodo === "Cartão de Débito") {
+                labelPagamento.innerText = "Pagamento via Cartão de Débito";
+                linhaRecebido.style.display = "none";
+                linhaTroco.style.display = "none";
+            }
         }
 
         function calcularTrocoCupom() {
@@ -1628,4 +1696,5 @@
     </script>
 </body>
 </html>
+
 
