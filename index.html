@@ -558,6 +558,19 @@
             .btn-black { grid-column: span 1; }
             .coluna-esquerda, .coluna-direita { width: 100%; }
         }
+
+        /* Estilos adicionados para visualização prévia */
+        .cupom-preview-mode {
+            transform: scale(0.9);
+            border: 2px solid var(--primary);
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #modalDetalhesVenda, #modalDetalhesVenda * { visibility: visible; }
+            #modalDetalhesVenda { position: absolute; left: 0; top: 0; background: white; }
+            .btn-main, .input-link-qr, .cupom-input-calc, textarea, .toggle-cupom-label { display: none !important; }
+        }
     </style>
 </head>
 <body onclick="resetarInatividade()" onkeydown="resetarInatividade()">
@@ -729,12 +742,20 @@
         </div>
     </div>
 
+    <div id="modalValorBruto" class="modal" style="background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 3000;">
+        <div style="background: var(--card); padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--warning); width: 80%; max-width: 300px;">
+            <h3 style="margin-top:0">Valor Bruto da Venda</h3>
+            <p id="txtValorBrutoModal" style="font-size: 24px; color: var(--warning); font-weight: bold;">R$ 0,00</p>
+            <button class="btn-voltar" style="width: 100%; margin:0" onclick="document.getElementById('modalValorBruto').style.display='none'">FECHAR</button>
+        </div>
+    </div>
+
     <div id="modalDetalhesVenda" class="modal">
         <div class="cupom-container">
             <div class="cupom-header">
                 <input type="text" id="cupom-nome-empresa" value="MINHA EMPRESA">
                 <input type="text" id="cupom-endereco" value="Endereço da Loja, 123" style="font-size: 11px; font-weight: normal;">
-                <div style="font-size: 10px;">CUPOM NÃO FISCAL</div>
+                <div id="texto-cupom-fiscal-frase" style="font-size: 10px;">CUPOM NÃO FISCAL</div>
             </div>
             <div class="cupom-info">
                 ID DA NOTA: <span id="cupom-id-nota"></span><br>
@@ -771,9 +792,17 @@
                 <p>Obrigado pela Preferência.<br>Volte Sempre.</p>
                 <textarea id="cupom-obs" style="width: 100%; font-family: inherit; font-size: 11px; border: 1px dotted #000; height: 40px;" placeholder="Digite algo aqui..."></textarea>
             </div>
-            <div style="margin-top: 20px; display: flex; gap: 5px;">
-                <button class="btn-main btn-blue" style="flex: 1; padding: 8px; font-size: 10px;" onclick="window.print()">🖨️ IMPRIMIR</button>
-                <button class="btn-main btn-vermelho" style="flex: 1; padding: 8px; font-size: 10px;" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
+            
+            <div class="toggle-cupom-label" style="margin-top: 10px; font-size: 11px; color: #333; display: flex; align-items: center; gap: 5px;">
+                <input type="checkbox" id="toggle-frase-fiscal" checked onchange="toggleFraseFiscal(this.checked)"> Exibir "CUPOM NÃO FISCAL"
+            </div>
+
+            <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 5px;">
+                <div style="display: flex; gap: 5px;">
+                   <button class="btn-main btn-blue" style="flex: 1; padding: 8px; font-size: 10px;" onclick="window.print()">🖨️ IMPRIMIR</button>
+                   <button class="btn-main btn-vermelho" style="flex: 1; padding: 8px; font-size: 10px;" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
+                </div>
+                <button class="btn-main" style="background: #6c757d; color: white; padding: 8px; font-size: 12px; width: 100%;" onclick="togglePreviewCupom()">👁️ VER PRÉVIA DA NOTA</button>
             </div>
         </div>
     </div>
@@ -1385,7 +1414,10 @@
                     <tr>
                         <td>${v.data}</td>
                         <td>
-                            <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER NOTA</button>
+                            <div style="display:flex; gap:2px">
+                                <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER NOTA</button>
+                                <button onclick="abrirModalValorBruto(${bruto})" style="font-size:10px; cursor:pointer; background: var(--warning); color: black; border:none; padding: 4px; border-radius:4px;">BRUTO</button>
+                            </div>
                         </td>
                         <td>${v.tipo}</td>
                         <td>R$ ${bruto.toFixed(2)}</td>
@@ -1406,6 +1438,22 @@
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
             displayTaxaDia.innerText = `Taxa Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
             displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
+        }
+
+        // NOVAS FUNÇÕES ADICIONADAS
+        function abrirModalValorBruto(valor) {
+            document.getElementById('txtValorBrutoModal').innerText = `R$ ${valor.toFixed(2)}`;
+            document.getElementById('modalValorBruto').style.display = 'flex';
+        }
+
+        function toggleFraseFiscal(marcado) {
+            const frase = document.getElementById('texto-cupom-fiscal-frase');
+            frase.style.display = marcado ? 'block' : 'none';
+        }
+
+        function togglePreviewCupom() {
+            const cupom = document.querySelector('.cupom-container');
+            cupom.classList.toggle('cupom-preview-mode');
         }
 
         // --- FUNÇÃO DO CUPOM (NOTA NÃO FISCAL) ---
@@ -1529,4 +1577,3 @@
     </script>
 </body>
 </html>
-
