@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -522,6 +520,34 @@
             z-index: 10;
         }
 
+        /* NOVO ESTILO MODAL DETALHES */
+        #modalDetalhesVenda {
+            z-index: 2000;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+        .container-detalhes {
+            background: var(--card);
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #conteudo-detalhes-venda {
+            margin: 15px 0;
+            font-family: monospace;
+            background: #000;
+            padding: 10px;
+            border-radius: 5px;
+            color: #0f0;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
         @media (max-width: 800px) {
             .container-topo { flex-direction: column; align-items: center; }
             .menu-principal { grid-template-columns: 1fr; }
@@ -668,7 +694,8 @@
                     <p id="dash-top" style="font-size:12px; color:var(--warning)">---</p>
                 </div>
             </div>
-            <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning);">
+            <div id="resumo-lucro" style="width: 100%; text-align: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid var(--warning); position: relative;">
+                <button onclick="limparGanhosHoje()" style="position: absolute; right: 10px; top: 10px; background: var(--danger); border: none; color: white; border-radius: 5px; cursor: pointer; font-size: 10px; padding: 5px;">ZERAR HOJE</button>
                 <span style="font-size: 14px; color: #aaa;">Ganhos de Hoje:</span><br>
                 <span id="valor-lucro-dia" style="font-size: 24px; font-weight: bold; color: var(--warning);">R$ 0,00</span><br>
                 <span id="taxa-maquina-dia" style="font-size: 12px; color: var(--danger);">Taxa Máquina: R$ 0,00</span>
@@ -695,6 +722,15 @@
                 </table>
             </div>
             <button class="btn-delete" style="width: 100%; padding: 10px;" onclick="limparHistoricoVendasComSenha()">LIMPAR HISTÓRICO</button>
+        </div>
+    </div>
+
+    <div id="modalDetalhesVenda" class="modal" style="display: none;">
+        <div class="container-detalhes">
+            <h3 style="margin:0; text-align:center; color: var(--primary);">DETALHES DA VENDA</h3>
+            <div id="conteudo-detalhes-venda"></div>
+            <button class="btn-main btn-blue" style="width:100%; margin-bottom:10px;" onclick="copiarDetalhesVenda()">📋 COPIAR INFORMAÇÕES</button>
+            <button class="btn-voltar" style="width:100%; margin:0" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
         </div>
     </div>
 
@@ -1253,6 +1289,10 @@
 
             const agora = new Date().getTime();
             const vinteQuatroHoras = 24 * 60 * 60 * 1000;
+            
+            // Verificação de reset manual dos ganhos diários
+            const dataUltimoReset = localStorage.getItem('data_reset_ganhos');
+            const hojeData = new Date().toLocaleDateString();
 
             vendasRealizadas.forEach((v, index) => {
                 const bruto = parseFloat(v.valorTotal);
@@ -1263,7 +1303,10 @@
                 lucroTotal += liquido;
                 taxaTotalAcumulada += valorDaTaxa;
 
-                if (agora - v.timestamp < vinteQuatroHoras) {
+                // Só soma no lucro dia se o timestamp for posterior ao reset e for dentro de 24h
+                const timestampReset = parseInt(localStorage.getItem('timestamp_reset_ganhos')) || 0;
+                
+                if (agora - v.timestamp < vinteQuatroHoras && v.timestamp > timestampReset) {
                     lucroDia += liquido;
                     taxaDiaAcumulada += valorDaTaxa;
                     if(v.tipo === "Pix") totPix += liquido;
@@ -1279,13 +1322,11 @@
                      contagemProdutos[v.nome] = (contagemProdutos[v.nome] || 0) + v.qtd;
                 }
 
-                const listaItensHtml = v.itens ? v.itens.map(i => `${i.qtd}x ${i.nome}`).join('<br>') : (v.nome || '---');
-
                 corpoTabela.innerHTML += `
                     <tr>
                         <td>${v.data}</td>
                         <td>
-                            <button onclick="alert('${listaItensHtml.replace(/<br>/g, '\\n')}')" style="font-size:10px; cursor:pointer">VER ITENS</button>
+                            <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER ITENS</button>
                         </td>
                         <td>${v.tipo}</td>
                         <td>R$ ${bruto.toFixed(2)}</td>
@@ -1306,6 +1347,46 @@
             displayLucroTotal.innerText = `R$ ${lucroTotal.toFixed(2)}`;
             displayTaxaDia.innerText = `Taxa Máquina: R$ ${taxaDiaAcumulada.toFixed(2)}`;
             displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
+        }
+
+        // FUNÇÃO PARA VISUALIZAR ITENS NO MODAL ORGANIZADO
+        function visualizarItensVenda(index) {
+            const venda = vendasRealizadas[index];
+            const display = document.getElementById('conteudo-detalhes-venda');
+            let texto = `📅 DATA/HORA: ${venda.data}\n`;
+            texto += `💳 MÉTODO: ${venda.tipo}\n`;
+            texto += `----------------------------\n`;
+            texto += `PRODUTOS:\n`;
+            
+            if(venda.itens && venda.itens.length > 0) {
+                venda.itens.forEach(i => {
+                    texto += `• ${i.qtd}x ${i.nome} - R$ ${i.valor}\n`;
+                });
+            } else {
+                texto += `• ${venda.qtd || 1}x ${venda.nome} - R$ ${venda.valorTotal}\n`;
+            }
+            
+            texto += `----------------------------\n`;
+            texto += `💰 TOTAL BRUTO: R$ ${parseFloat(venda.valorTotal).toFixed(2)}\n`;
+            texto += `📱 APARELHO: ${venda.aparelho || 'N/A'}`;
+
+            display.innerText = texto;
+            document.getElementById('modalDetalhesVenda').style.display = 'flex';
+        }
+
+        function copiarDetalhesVenda() {
+            const texto = document.getElementById('conteudo-detalhes-venda').innerText;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("Informações copiadas para a área de transferência!");
+            });
+        }
+
+        // FUNÇÃO PARA LIMPAR GANHOS DE HOJE
+        function limparGanhosHoje() {
+            if(confirm("Deseja zerar o campo 'Ganhos de Hoje'? Isso não apagará o histórico, apenas esconderá os valores anteriores no dashboard diário.")) {
+                localStorage.setItem('timestamp_reset_ganhos', new Date().getTime());
+                renderizarHistoricoVendas();
+            }
         }
 
         function atualizarTaxaVenda(index, valor) {
@@ -1383,5 +1464,3 @@
     </script>
 </body>
 </html>
-
-
