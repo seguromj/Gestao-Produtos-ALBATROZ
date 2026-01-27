@@ -1518,6 +1518,7 @@
             
             if(cupom.classList.contains('preview-modo-profissional')) {
                 btn.innerText = "✏️ EDITAR NOTA";
+                // CORREÇÃO: Passar o valor do input para o span visual antes de ocultar o input
                 txtRec.innerText = parseFloat(inputRec.value).toFixed(2);
                 txtRec.style.display = "inline-block";
                 inputRec.style.display = "none";
@@ -1696,5 +1697,3 @@
     </script>
 </body>
 </html>
-
-
