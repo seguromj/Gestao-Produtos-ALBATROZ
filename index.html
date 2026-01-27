@@ -20,6 +20,7 @@
     <title>Sistema Albatroz</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --primary: #007bff;
@@ -520,33 +521,36 @@
             z-index: 10;
         }
 
-        /* NOVO ESTILO MODAL DETALHES */
+        /* ESTILO CUPOM NOTA NÃO FISCAL */
         #modalDetalhesVenda {
             z-index: 2000;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             justify-content: center;
-            align-items: center;
-        }
-        .container-detalhes {
-            background: var(--card);
-            width: 90%;
-            max-width: 400px;
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid var(--primary);
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-        #conteudo-detalhes-venda {
-            margin: 15px 0;
-            font-family: monospace;
-            background: #000;
-            padding: 10px;
-            border-radius: 5px;
-            color: #0f0;
-            max-height: 300px;
+            align-items: flex-start;
             overflow-y: auto;
-            white-space: pre-wrap;
         }
+        .cupom-container {
+            background: #fff;
+            width: 95%;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        .cupom-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
+        .cupom-header input { border: none; text-align: center; width: 100%; font-weight: bold; font-family: inherit; font-size: 16px; margin-bottom: 5px; }
+        .cupom-info { font-size: 12px; margin-bottom: 10px; }
+        .cupom-tabela { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+        .cupom-tabela th { text-align: left; border-bottom: 1px solid #000; }
+        .cupom-totais { border-top: 1px dashed #000; padding-top: 10px; margin-top: 10px; }
+        .linha-total { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; }
+        .cupom-footer { text-align: center; margin-top: 20px; border-top: 1px dashed #000; padding-top: 10px; }
+        .cupom-input-calc { border: 1px solid #ddd; padding: 5px; width: 80px; font-family: inherit; text-align: right; }
+        #qrcode-cupom { display: flex; justify-content: center; margin: 15px 0; }
+        .input-link-qr { width: 100%; font-size: 10px; margin-top: 5px; border: 1px solid #ccc; }
 
         @media (max-width: 800px) {
             .container-topo { flex-direction: column; align-items: center; }
@@ -725,12 +729,52 @@
         </div>
     </div>
 
-    <div id="modalDetalhesVenda" class="modal" style="display: none;">
-        <div class="container-detalhes">
-            <h3 style="margin:0; text-align:center; color: var(--primary);">DETALHES DA VENDA</h3>
-            <div id="conteudo-detalhes-venda"></div>
-            <button class="btn-main btn-blue" style="width:100%; margin-bottom:10px;" onclick="copiarDetalhesVenda()">📋 COPIAR INFORMAÇÕES</button>
-            <button class="btn-voltar" style="width:100%; margin:0" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
+    <div id="modalDetalhesVenda" class="modal">
+        <div class="cupom-container">
+            <div class="cupom-header">
+                <input type="text" id="cupom-nome-empresa" value="MINHA EMPRESA">
+                <input type="text" id="cupom-endereco" value="Endereço da Loja, 123" style="font-size: 11px; font-weight: normal;">
+                <div style="font-size: 10px;">CUPOM NÃO FISCAL</div>
+            </div>
+            <div class="cupom-info">
+                ID DA NOTA: <span id="cupom-id-nota"></span><br>
+                DATA/HORA: <span id="cupom-data"></span><br>
+                PAGAMENTO: <span id="cupom-pagamento"></span>
+            </div>
+            <table class="cupom-tabela">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">ITEM</th>
+                        <th style="text-align: center;">QTD</th>
+                        <th style="text-align: right;">VALOR</th>
+                    </tr>
+                </thead>
+                <tbody id="cupom-corpo-itens"></tbody>
+            </table>
+            <div class="cupom-totais">
+                <div class="linha-total">
+                    <span>TOTAL DOS PRODUTOS:</span>
+                    <span id="cupom-total-bruto">R$ 0,00</span>
+                </div>
+                <div class="linha-total">
+                    <span>VALOR RECEBIDO:</span>
+                    <span>R$ <input type="number" id="cupom-calc-recebido" class="cupom-input-calc" value="0.00" oninput="calcularTrocoCupom()"></span>
+                </div>
+                <div class="linha-total">
+                    <span>TROCO:</span>
+                    <span id="cupom-calc-troco">R$ 0,00</span>
+                </div>
+            </div>
+            <div id="qrcode-cupom"></div>
+            <input type="text" id="cupom-link-qr" class="input-link-qr" placeholder="Link para o QR Code" oninput="gerarQRCodeCupom(this.value)">
+            <div class="cupom-footer">
+                <p>Obrigado pela Preferência.<br>Volte Sempre.</p>
+                <textarea id="cupom-obs" style="width: 100%; font-family: inherit; font-size: 11px; border: 1px dotted #000; height: 40px;" placeholder="Digite algo aqui..."></textarea>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 5px;">
+                <button class="btn-main btn-blue" style="flex: 1; padding: 8px; font-size: 10px;" onclick="window.print()">🖨️ IMPRIMIR</button>
+                <button class="btn-main btn-vermelho" style="flex: 1; padding: 8px; font-size: 10px;" onclick="document.getElementById('modalDetalhesVenda').style.display='none'">FECHAR</button>
+            </div>
         </div>
     </div>
 
@@ -786,6 +830,7 @@
         let scanner;
         let cameras = [];
         let currentCamIndex = 0;
+        let qrCodeInstance = null;
         let historico = JSON.parse(localStorage.getItem('meu_historico')) || [];
         let produtos = JSON.parse(localStorage.getItem('meus_produtos')) || [];
         let vendasRealizadas = JSON.parse(localStorage.getItem('historico_vendas')) || [];
@@ -954,7 +999,7 @@
         let barcodeBuffer = "";
         window.addEventListener("keydown", (e) => {
             if (document.getElementById('modalSist').style.display === 'flex') {
-                if (document.activeElement.id === 'valor-recebido') return;
+                if (document.activeElement.id === 'valor-recebido' || document.activeElement.className.includes('baixa-input')) return;
                 if (e.key === "Enter") {
                     if (barcodeBuffer.length > 0) {
                         const existe = produtos.some(p => p.id === barcodeBuffer);
@@ -1057,6 +1102,7 @@
                 nome: produtoEncontrado ? (produtoEncontrado.nome || "Produto Localizado") : "ID Não Cadastrado",
                 img: produtoEncontrado ? produtoEncontrado.img : "https://via.placeholder.com/50",
                 valor: produtoEncontrado ? produtoEncontrado.valor : 0,
+                qtdBaixa: 1, // Adicionado para persistência
                 timestamp: new Date().getTime()
             };
             historico.unshift(itemObj);
@@ -1071,6 +1117,21 @@
             }
         }
 
+        // MODIFICAÇÃO: Salvando a quantidade no array historico para não resetar ao bipar
+        function atualizarQtdNoHistorico(index, valor) {
+            historico[index].qtdBaixa = parseInt(valor) || 1;
+            localStorage.setItem('meu_historico', JSON.stringify(historico));
+            
+            // Recalcula o total sem renderizar tudo novamente (para evitar perda de foco)
+            let soma = 0;
+            historico.forEach(item => {
+                soma += (parseFloat(item.valor) || 0) * (item.qtdBaixa || 1);
+            });
+            valorTotalVenda = soma;
+            document.getElementById('valor-total').innerText = `Total: R$ ${soma.toFixed(2)}`;
+            calcularTroco();
+        }
+
         function atualizarLista() {
             const container = document.getElementById('lista');
             const btnGeral = document.getElementById('container-baixa-geral');
@@ -1081,7 +1142,9 @@
 
             historico.forEach((item, index) => {
                 const valorItem = parseFloat(item.valor) || 0;
-                somaTotal += valorItem;
+                const qtd = item.qtdBaixa || 1;
+                somaTotal += (valorItem * qtd);
+                
                 const div = document.createElement('div');
                 div.className = 'item-lista';
                 div.innerHTML = `
@@ -1094,7 +1157,7 @@
                     </div>
                     <div style="display:flex; align-items:center; gap:5px">
                         <div class="baixa-container">
-                            <input type="number" class="baixa-input" id="baixa-${index}" value="1">
+                            <input type="number" class="baixa-input" value="${qtd}" oninput="atualizarQtdNoHistorico(${index}, this.value)">
                             <button class="btn-delete" style="background:var(--warning); color:black;" onclick="darBaixa('${item.id}', ${index})">BAIXA</button>
                         </div>
                         <button class="btn-delete" onclick="removerItem(${index})">X</button>
@@ -1181,12 +1244,13 @@
         }
 
         function darBaixa(id, histIndex) {
-            const qtdBaixa = parseInt(document.getElementById(`baixa-${histIndex}`).value);
+            const qtdBaixa = historico[histIndex].qtdBaixa || 1;
             const pIndex = produtos.findIndex(p => p.id === id);
             const metodo = document.getElementById('metodo-pagamento').value;
             if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
                 produtos[pIndex].qtd -= qtdBaixa;
                 vendasRealizadas.unshift({
+                    idVenda: 'V-' + Math.floor(Date.now() / 1000),
                     data: new Date().toLocaleString(),
                     timestamp: new Date().getTime(),
                     nome: produtos[pIndex].nome || "Produto",
@@ -1212,7 +1276,7 @@
             let totalGeralVenda = 0;
 
             historico.forEach((item, index) => {
-                const qtdBaixa = parseInt(document.getElementById(`baixa-${index}`).value);
+                const qtdBaixa = item.qtdBaixa || 1;
                 const pIndex = produtos.findIndex(p => p.id === item.id);
                 if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
                     produtos[pIndex].qtd -= qtdBaixa;
@@ -1228,6 +1292,7 @@
 
             if(itensVendidos.length > 0) {
                 vendasRealizadas.unshift({
+                    idVenda: 'V-' + Math.floor(Date.now() / 1000),
                     data: new Date().toLocaleString(),
                     timestamp: new Date().getTime(),
                     tipo: metodo,
@@ -1289,10 +1354,7 @@
 
             const agora = new Date().getTime();
             const vinteQuatroHoras = 24 * 60 * 60 * 1000;
-            
-            // Verificação de reset manual dos ganhos diários
-            const dataUltimoReset = localStorage.getItem('data_reset_ganhos');
-            const hojeData = new Date().toLocaleDateString();
+            const timestampReset = parseInt(localStorage.getItem('timestamp_reset_ganhos')) || 0;
 
             vendasRealizadas.forEach((v, index) => {
                 const bruto = parseFloat(v.valorTotal);
@@ -1302,9 +1364,6 @@
                 
                 lucroTotal += liquido;
                 taxaTotalAcumulada += valorDaTaxa;
-
-                // Só soma no lucro dia se o timestamp for posterior ao reset e for dentro de 24h
-                const timestampReset = parseInt(localStorage.getItem('timestamp_reset_ganhos')) || 0;
                 
                 if (agora - v.timestamp < vinteQuatroHoras && v.timestamp > timestampReset) {
                     lucroDia += liquido;
@@ -1326,7 +1385,7 @@
                     <tr>
                         <td>${v.data}</td>
                         <td>
-                            <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER ITENS</button>
+                            <button onclick="visualizarItensVenda(${index})" style="font-size:10px; cursor:pointer; background: var(--primary); color: white; border:none; padding: 4px; border-radius:4px;">VER NOTA</button>
                         </td>
                         <td>${v.tipo}</td>
                         <td>R$ ${bruto.toFixed(2)}</td>
@@ -1349,41 +1408,55 @@
             displayTaxaTotal.innerText = `Taxa Máquina Total: R$ ${taxaTotalAcumulada.toFixed(2)}`;
         }
 
-        // FUNÇÃO PARA VISUALIZAR ITENS NO MODAL ORGANIZADO
+        // --- FUNÇÃO DO CUPOM (NOTA NÃO FISCAL) ---
         function visualizarItensVenda(index) {
             const venda = vendasRealizadas[index];
-            const display = document.getElementById('conteudo-detalhes-venda');
-            let texto = `📅 DATA/HORA: ${venda.data}\n`;
-            texto += `💳 MÉTODO: ${venda.tipo}\n`;
-            texto += `----------------------------\n`;
-            texto += `PRODUTOS:\n`;
+            document.getElementById('cupom-id-nota').innerText = venda.idVenda || 'N/A';
+            document.getElementById('cupom-data').innerText = venda.data;
+            document.getElementById('cupom-pagamento').innerText = venda.tipo;
+            document.getElementById('cupom-total-bruto').innerText = `R$ ${parseFloat(venda.valorTotal).toFixed(2)}`;
             
-            if(venda.itens && venda.itens.length > 0) {
+            const corpo = document.getElementById('cupom-corpo-itens');
+            corpo.innerHTML = "";
+            
+            if(venda.itens) {
                 venda.itens.forEach(i => {
-                    texto += `• ${i.qtd}x ${i.nome} - R$ ${i.valor}\n`;
+                    corpo.innerHTML += `
+                        <tr>
+                            <td>${i.nome}</td>
+                            <td style="text-align:center;">${i.qtd}</td>
+                            <td style="text-align:right;">R$ ${parseFloat(i.valor).toFixed(2)}</td>
+                        </tr>`;
                 });
-            } else {
-                texto += `• ${venda.qtd || 1}x ${venda.nome} - R$ ${venda.valorTotal}\n`;
             }
-            
-            texto += `----------------------------\n`;
-            texto += `💰 TOTAL BRUTO: R$ ${parseFloat(venda.valorTotal).toFixed(2)}\n`;
-            texto += `📱 APARELHO: ${venda.aparelho || 'N/A'}`;
 
-            display.innerText = texto;
+            document.getElementById('cupom-calc-recebido').value = "0.00";
+            document.getElementById('cupom-calc-troco').innerText = "R$ 0,00";
             document.getElementById('modalDetalhesVenda').style.display = 'flex';
         }
 
-        function copiarDetalhesVenda() {
-            const texto = document.getElementById('conteudo-detalhes-venda').innerText;
-            navigator.clipboard.writeText(texto).then(() => {
-                alert("Informações copiadas para a área de transferência!");
-            });
+        function calcularTrocoCupom() {
+            const totalStr = document.getElementById('cupom-total-bruto').innerText.replace('R$ ', '');
+            const total = parseFloat(totalStr);
+            const recebido = parseFloat(document.getElementById('cupom-calc-recebido').value) || 0;
+            const troco = recebido - total;
+            document.getElementById('cupom-calc-troco').innerText = `R$ ${troco > 0 ? troco.toFixed(2) : "0,00"}`;
         }
 
-        // FUNÇÃO PARA LIMPAR GANHOS DE HOJE
+        function gerarQRCodeCupom(link) {
+            const container = document.getElementById('qrcode-cupom');
+            container.innerHTML = "";
+            if(link.trim() !== "") {
+                new QRCode(container, {
+                    text: link,
+                    width: 100,
+                    height: 100
+                });
+            }
+        }
+
         function limparGanhosHoje() {
-            if(confirm("Deseja zerar o campo 'Ganhos de Hoje'? Isso não apagará o histórico, apenas esconderá os valores anteriores no dashboard diário.")) {
+            if(confirm("Deseja zerar o campo 'Ganhos de Hoje'?")) {
                 localStorage.setItem('timestamp_reset_ganhos', new Date().getTime());
                 renderizarHistoricoVendas();
             }
@@ -1426,37 +1499,29 @@
         }
 
         function importarDados(event) {
-            if(!confirm("Isso irá substituir todos os dados atuais (Estoque, Vendas e Carrinho). Deseja continuar?")) return;
+            if(!confirm("Isso irá substituir todos os dados atuais. Deseja continuar?")) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const dados = JSON.parse(e.target.result);
-                    
-                    // Restaurar Produtos
                     if(dados.produtos) {
                         produtos = dados.produtos;
                         localStorage.setItem('meus_produtos', JSON.stringify(produtos));
                     }
-                    
-                    // Restaurar Vendas
                     if(dados.vendas) {
                         vendasRealizadas = dados.vendas;
                         localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                     }
-
-                    // Restaurar Carrinho/Historico de leitura
                     if(dados.historico) {
                         historico = dados.historico;
                         localStorage.setItem('meu_historico', JSON.stringify(historico));
                     }
-
                     renderizarCatalogo();
                     atualizarVisualizacaoHome();
                     atualizarLista();
                     alert("Backup Geral importado com sucesso!");
                 } catch(err) {
                     alert("Erro ao ler o arquivo de backup.");
-                    console.error(err);
                 }
             };
             reader.readAsText(event.target.files[0]);
@@ -1464,3 +1529,4 @@
     </script>
 </body>
 </html>
+
