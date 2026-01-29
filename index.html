@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!--====👇Codigo para torna o site em App👇====-->
-    <link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json">
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -15,10 +13,7 @@
         });
       }
     </script>
-<!--====👆Codigo para torna o site em App👆====-->
-
-    
-    <title>Sistema Albatroz</title>
+<title>Sistema Albatroz</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -34,6 +29,7 @@
             --laranja: #B5300E;
             --black: #B5300E;
             --vermelho: #B5300E;
+            --amarelo-claro: #fff3cd; /* Nova cor para o campo de escaneamento */
         }
 
         body {
@@ -111,6 +107,17 @@
             padding: 15px;
             box-sizing: border-box;
             border: 1px solid #333;
+        }
+
+        /* ESTILO DO CAMPO AMARELO PARA PRODUTOS ESCANEADOS */
+        .secao-escaneados {
+            width: 100%;
+            background: var(--amarelo-claro);
+            border-radius: 15px;
+            padding: 15px;
+            box-sizing: border-box;
+            border: 2px solid var(--warning);
+            color: #000;
         }
 
         .card-disponivel {
@@ -220,14 +227,15 @@
         }
 
         .item-lista {
-            background: var(--card);
+            background: #ffffff;
+            color: #000;
             padding: 8px 12px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-left: 4px solid var(--primary);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .id-text { font-size: 16px; font-weight: bold; color: var(--primary); }
@@ -599,8 +607,7 @@
     </style>
 </head>
 <body onclick="resetarInatividade()" onkeydown="resetarInatividade()">
-<!--====👇Codigo para torna o site em App👇====-->
-    <div id="container-instalacao">
+<div id="container-instalacao">
         <h3>Instalar Albatroz</h3>
         <p>Deseja instalar este sistema como um aplicativo no seu celular?</p>
         <div class="botoes-pwa">
@@ -608,10 +615,7 @@
             <button id="btnRecusarApp" class="btn-pwa btn-vermelho">AGORA NÃO</button>
         </div>
     </div>
-<!--====👆Codigo para torna o site em App👆====-->
-     
-    
-    <div id="overlay-login">
+<div id="overlay-login">
         <h2 id="titulo-bloqueio">🔒 SISTEMA BLOQUEADO</h2>
         <p id="msg-login">Verificando credenciais...</p>
         <div id="campos-login" style="display:none; flex-direction:column; gap:10px; width: 80%; max-width:300px;">
@@ -630,7 +634,7 @@
 
     <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/766/766-preview.mp3"></audio>
 
-    <div id="aviso-erro">PRODUTO NÃO EXISTE</div>
+    <div id="aviso-erro">PRODUTO NÃO CADASTRADO NO SISTEMA</div>
 
     <div class="container-topo" id="home">
         
@@ -638,17 +642,17 @@
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                 <img src="icon-512.png" id="logo-sistema" style="width: 80px; height: 80px; border-radius: 50%;">
                 <div>
-                    <h2 style="margin:0; color: white;">ALBATROZ <strong style="font-size: 11px; color: #002680">PDV</strong></h2>
+                    <h2 style="margin:0; color: white;">ALBATROZ <strong style="font-size: 11px; color: #2D35FA">PDV</strong></h2>
                     <small style="color: var(--primary);"><strong style="color: #800000">Suporte:</strong> (62) 995679219</small>
                 </div>
             </div>
 
             <div class="menu-principal">
                 <button class="btn-main btn-blue" onclick="abrirSist()"><img src="scan-code.png" alt="imagem escanear" style="padding: 10px; width: 20px; height: 20px; border-radius: 50%;"> Escanear Produtos</button>
-                <button class="btn-main btn-green" onclick="abrirHistoricoVendas()">📊 HISTÓRICO</button>
-                <button class="btn-main btn-orange" onclick="abrirCadastro()">🛍️ CADASTRAR</button>
-                <a class="btn-main btn-laranja" href="Nota-fiscal-por-lei.html" target="_self">🖼️ IMAGENS</a>
-                <a class="btn-main btn-vermelho" href="Codigo-Barra-QR.html" target="_self">GEN. QR/BARRA</a>
+                <button class="btn-main btn-green" onclick="abrirHistoricoVendas()">📊 HISTÓRICO de VENDA</button>
+                <button class="btn-main btn-orange" onclick="abrirCadastro()">🛍️ CADASTRAR PRODUTOS</button>
+                <a class="btn-main btn-laranja" href="Nota-fiscal-por-lei.html" target="_self">Cupom de novo Fiscal</a>
+                <a class="btn-main btn-vermelho" href="Codigo-Barra-QR.html" target="_self">Criar QR/BARRA</a>
                 <a class="btn-main btn-vermelho" href="Botao-Admin.html" target="_self">ALTERAR SITE</a>
                 <a class="btn-main btn-black" href="Tutorial-Sistema.html" target="_self">Tutorial do Sistema</a>
             </div>
@@ -690,7 +694,10 @@
                 <div id="texto-troco" class="texto-troco">Troco: R$ 0,00</div>
             </div>
         </div>
-        <div class="lista-resultados" id="lista"></div>
+        <div class="secao-escaneados">
+            <h3 style="margin:0 0 10px 0; text-align:center; font-size: 14px;">🛒 ITENS NO CARRINHO</h3>
+            <div class="lista-resultados" id="lista"></div>
+        </div>
     </div>
 
     <div id="modalCadastro" class="modal">
@@ -821,7 +828,7 @@
             </table>
             <div class="cupom-totais">
                 <div class="linha-total">
-                    <span>TOTAL DOS PRODUTOS:</span>
+                    <span>VALOR TOTAL:</span>
                     <span id="cupom-total-bruto">R$ 0,00</span>
                 </div>
                 <div class="linha-total" id="linha-recebido-cupom">
@@ -855,8 +862,7 @@
             </div>
         </div>
     </div>
-<!--👇 Codigo para realizar a Instalacao do App 👇-->
-    <script>
+<script>
       let promptDeInstalacao;
       const areaInstalacao = document.getElementById('container-instalacao');
       const botaoInstalar = document.getElementById('btnInstalarApp');
@@ -903,8 +909,7 @@
         areaInstalacao.style.display = 'none';
       });
     </script>
-<!--👆 Codigo para realizar a Instalacao do App 👆-->
-    <script>
+<script>
         let scanner;
         let cameras = [];
         let currentCamIndex = 0;
@@ -1214,7 +1219,7 @@
             const container = document.getElementById('lista');
             const btnGeral = document.getElementById('container-baixa-geral');
             const campoTotal = document.getElementById('valor-total');
-            container.innerHTML = '<h4 style="margin:5px 0">Histórico</h4>';
+            container.innerHTML = '';
             let somaTotal = 0;
             btnGeral.style.display = historico.length > 0 ? 'block' : 'none';
 
@@ -1230,7 +1235,7 @@
                         <img src="${item.img}" style="width:30px; height:30px; border-radius:4px; object-fit:cover">
                         <div>
                             <span class="id-text">${item.id}</span><br>
-                            <small style="font-size:10px; color:#aaa">${item.nome} | R$ ${valorItem.toFixed(2)}</small>
+                            <small style="font-size:10px; color:#555">${item.nome} | R$ ${valorItem.toFixed(2)}</small>
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:5px">
@@ -1701,8 +1706,5 @@
     </script>
 </body>
 </html>
-
-
-
 
 
