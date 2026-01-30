@@ -837,7 +837,7 @@
                 </div>
                 <div class="linha-atalho">
                     <span>Focar Qtd Padrão:</span>
-                    <input type="text" class="input-tecla" id="key-focar-qtd" readonly onclick="capturarTecla('key-focar-qtd')">
+                    <input type="text" class="input-tecla" id="key-focar-qtd-padrao" readonly onclick="capturarTecla('key-focar-qtd-padrao')">
                 </div>
             </div>
 
@@ -907,7 +907,7 @@
             <div class="secao-disponiveis" style="min-height: 400px;">
                 <h3 style="margin-top:0; text-align:center;">CATÁLOGO RÁPIDO</h3>
                 <div class="busca-container">
-                    <input type="text" id="busca-home" placeholder="🔍 Buscar no catálogo rápido..." oninput="atualizarVisualizacaoHome()">
+                    <input type="text" id="busca-home" placeholder="🔍 Buscar no catálogo..." oninput="atualizarVisualizacaoHome()">
                 </div>
                 <div class="grid-produtos" id="home-catalogo-view"></div>
                 <p style="text-align: center; color: #666; font-size: 14px; margin-top: 15px;">Use os botões laterais para gerenciar o sistema.</p>
@@ -1197,12 +1197,12 @@
             baixa: 'F9',
             girarCamera: 'c',
             focarRecebido: 'r',
-            focarQtd: 'q',
             zerarHoje: 'z',
             limparHistorico: 'Delete',
             salvarProduto: 'Enter',
             exportarBackup: 'e',
-            focarBusca: 'b'
+            focarBusca: 'b',
+            focarQtdPadrao: 'q'
         };
 
         // --- FUNÇÕES DE IDENTIFICAÇÃO DE DISPOSITIVO AVANÇADA ---
@@ -1244,7 +1244,7 @@
         }
 
         function enviarLogParaGoogleForms(usuarioId) {
-            const formURL = "https://docs.google.com/forms/d/e/1FAIpQLScvNN2ww22ZPmF_WCp1pUdS3sxzgtCEpfNUHRlREF8cBAMp2g/formResponse";
+            const formURL = "https://docs.google.com/forms/d/e/1FAIpQLScvNN2ww22ZPmF_WCp1pUdS3sxgtCEpfNUHRlREF8cBAMp2g/formResponse";
             const infoAparelho = obterInfoTecnicaAparelho();
             
             // AGORA ENVIA TAMBÉM O ID DO USUÁRIO QUE ACESSOU
@@ -1379,7 +1379,7 @@
                     if (e.key === configTeclas.baixa) { e.preventDefault(); baixaGeral(); }
                     if (e.key === configTeclas.girarCamera) { e.preventDefault(); girarCamera(); }
                     if (e.key === configTeclas.focarRecebido) { e.preventDefault(); document.getElementById('valor-recebido').focus(); }
-                    if (e.key === configTeclas.focarQtd) { e.preventDefault(); document.getElementById('qtd-multiplicadora').focus(); }
+                    if (e.key === configTeclas.focarQtdPadrao) { e.preventDefault(); document.getElementById('qtd-multiplicadora').focus(); }
                 }
 
                 // ATALHOS HISTÓRICO (Apenas se modalGen aberto)
@@ -1437,7 +1437,7 @@
         function atualizarVisualizacaoHome() {
             const container = document.getElementById('lista-disponiveis');
             const containerCatalogo = document.getElementById('home-catalogo-view');
-            const termoBusca = document.getElementById('busca-home').value.toLowerCase();
+            const buscaHome = document.getElementById('busca-home').value.toLowerCase();
             container.innerHTML = "";
             containerCatalogo.innerHTML = "";
             
@@ -1447,10 +1447,6 @@
             }
 
             produtos.forEach(p => {
-                // Logica de busca para a Home
-                const matchBusca = (p.id.toLowerCase().includes(termoBusca) || (p.nome && p.nome.toLowerCase().includes(termoBusca)));
-                
-                // Lado Esquerdo (Disponíveis)
                 const div = document.createElement('div');
                 div.className = 'card-disponivel';
                 if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
@@ -1460,8 +1456,8 @@
                 `;
                 container.appendChild(div);
 
-                // Catálogo Rápido (Lado Direito)
-                if (termoBusca === "" || matchBusca) {
+                // Lógica de busca para o catálogo da home
+                if (buscaHome === "" || p.id.toLowerCase().includes(buscaHome) || (p.nome && p.nome.toLowerCase().includes(buscaHome))) {
                     const cardCat = document.createElement('div');
                     cardCat.className = 'produto-card';
                     cardCat.innerHTML = `
@@ -1665,11 +1661,7 @@
             document.getElementById('p-qtd').value = p.qtd;
             document.getElementById('edit-index').value = i;
             window.scrollTo({top: 0, behavior: 'smooth'});
-            
-            // Efeito visual para confirmar carregamento
-            const btnSalvar = document.getElementById('btn-salvar-manual');
-            btnSalvar.style.boxShadow = "0 0 20px var(--primary)";
-            setTimeout(() => { btnSalvar.style.boxShadow = ""; }, 1000);
+            document.getElementById('p-nome').focus();
         }
 
         function excluirProdutoPermanente(i) {
@@ -2138,12 +2130,12 @@
             document.getElementById('key-baixa').value = configTeclas.baixa;
             document.getElementById('key-girar-camera').value = configTeclas.girarCamera;
             document.getElementById('key-focar-recebido').value = configTeclas.focarRecebido;
-            document.getElementById('key-focar-qtd').value = configTeclas.focarQtd;
             document.getElementById('key-zerar-hoje').value = configTeclas.zerarHoje;
             document.getElementById('key-limpar-hist').value = configTeclas.limparHistorico;
             document.getElementById('key-salvar-prod').value = configTeclas.salvarProduto;
             document.getElementById('key-exportar').value = configTeclas.exportarBackup;
             document.getElementById('key-focar-busca').value = configTeclas.focarBusca;
+            document.getElementById('key-focar-qtd-padrao').value = configTeclas.focarQtdPadrao;
         }
 
         function capturarTecla(inputId) {
@@ -2163,3 +2155,4 @@
     </script>
 </body>
 </html>
+
