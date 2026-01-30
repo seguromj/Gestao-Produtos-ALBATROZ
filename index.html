@@ -836,8 +836,8 @@
                     <input type="text" class="input-tecla" id="key-focar-recebido" readonly onclick="capturarTecla('key-focar-recebido')">
                 </div>
                 <div class="linha-atalho">
-                    <span>Focar Quantidade PDV:</span>
-                    <input type="text" class="input-tecla" id="key-focar-qtd-pdv" readonly onclick="capturarTecla('key-focar-qtd-pdv')">
+                    <span>Focar Qtd Padrão:</span>
+                    <input type="text" class="input-tecla" id="key-focar-qtd" readonly onclick="capturarTecla('key-focar-qtd')">
                 </div>
             </div>
 
@@ -958,7 +958,7 @@
 
     <div id="modalCadastro" class="modal">
         <button class="btn-voltar" onclick="fecharTudo()">⬅ VOLTAR</button>
-        <div class="form-cadastro" id="ancora-formulario">
+        <div class="form-cadastro">
             <h3 style="margin:0; text-align:center; color:var(--primary)">Cadastrar/Editar Produto</h3>
             <input type="hidden" id="edit-index">
             <input type="text" id="p-nome" placeholder="Nome do Produto"> 
@@ -1197,7 +1197,7 @@
             baixa: 'F9',
             girarCamera: 'c',
             focarRecebido: 'r',
-            focarQtdPdv: 'q',
+            focarQtd: 'q',
             zerarHoje: 'z',
             limparHistorico: 'Delete',
             salvarProduto: 'Enter',
@@ -1379,7 +1379,7 @@
                     if (e.key === configTeclas.baixa) { e.preventDefault(); baixaGeral(); }
                     if (e.key === configTeclas.girarCamera) { e.preventDefault(); girarCamera(); }
                     if (e.key === configTeclas.focarRecebido) { e.preventDefault(); document.getElementById('valor-recebido').focus(); }
-                    if (e.key === configTeclas.focarQtdPdv) { e.preventDefault(); document.getElementById('qtd-multiplicadora').focus(); }
+                    if (e.key === configTeclas.focarQtd) { e.preventDefault(); document.getElementById('qtd-multiplicadora').focus(); }
                 }
 
                 // ATALHOS HISTÓRICO (Apenas se modalGen aberto)
@@ -1437,8 +1437,7 @@
         function atualizarVisualizacaoHome() {
             const container = document.getElementById('lista-disponiveis');
             const containerCatalogo = document.getElementById('home-catalogo-view');
-            const termoBusca = document.getElementById('busca-home').value.toLowerCase();
-            
+            const termoBusca = document.getElementById('busca-home').value.toLowerCase(); // TERMO DE BUSCA DA HOME
             container.innerHTML = "";
             containerCatalogo.innerHTML = "";
             
@@ -1448,8 +1447,10 @@
             }
 
             produtos.forEach((p, i) => {
-                // Filtro para o catálogo da home
-                if (termoBusca === "" || p.id.toLowerCase().includes(termoBusca) || (p.nome && p.nome.toLowerCase().includes(termoBusca))) {
+                // FILTRO DE BUSCA NA HOME
+                const matchesBusca = termoBusca === "" || p.id.toLowerCase().includes(termoBusca) || (p.nome && p.nome.toLowerCase().includes(termoBusca));
+
+                if (matchesBusca) {
                     const div = document.createElement('div');
                     div.className = 'card-disponivel';
                     if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
@@ -1462,7 +1463,7 @@
                     const cardCat = document.createElement('div');
                     cardCat.className = 'produto-card';
                     cardCat.innerHTML = `
-                        <button class="btn-edit-prod" onclick="abrirCadastro(); editarProduto(${i});">✏️</button>
+                        <button class="btn-edit-prod" onclick="editarProdutoHome(${i})">✏️</button>
                         <img src="${p.img}">
                         <div class="produto-info">
                             <b>${p.nome}</b><br>
@@ -1472,6 +1473,12 @@
                     containerCatalogo.appendChild(cardCat);
                 }
             });
+        }
+
+        // NOVA FUNÇÃO PARA EDITAR A PARTIR DA HOME
+        function editarProdutoHome(i) {
+            abrirCadastro();
+            editarProduto(i);
         }
 
         async function abrirSist() {
@@ -1662,11 +1669,9 @@
             document.getElementById('p-valor').value = p.valor;
             document.getElementById('p-qtd').value = p.qtd;
             document.getElementById('edit-index').value = i;
-            
-            // Rolar suavemente para o formulário para que o usuário veja as informações carregadas
-            const ancora = document.getElementById('ancora-formulario');
-            if(ancora) ancora.scrollIntoView({behavior: 'smooth'});
-            else window.scrollTo({top: 0, behavior: 'smooth'});
+            // AÇÃO DE SUBIR PARA VER RESULTADOS NOS CAMPOS
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            document.getElementById('modalCadastro').scrollTo({top: 0, behavior: 'smooth'});
         }
 
         function excluirProdutoPermanente(i) {
@@ -2135,7 +2140,7 @@
             document.getElementById('key-baixa').value = configTeclas.baixa;
             document.getElementById('key-girar-camera').value = configTeclas.girarCamera;
             document.getElementById('key-focar-recebido').value = configTeclas.focarRecebido;
-            document.getElementById('key-focar-qtd-pdv').value = configTeclas.focarQtdPdv;
+            document.getElementById('key-focar-qtd').value = configTeclas.focarQtd;
             document.getElementById('key-zerar-hoje').value = configTeclas.zerarHoje;
             document.getElementById('key-limpar-hist').value = configTeclas.limparHistorico;
             document.getElementById('key-salvar-prod').value = configTeclas.salvarProduto;
@@ -2160,3 +2165,4 @@
     </script>
 </body>
 </html>
+
