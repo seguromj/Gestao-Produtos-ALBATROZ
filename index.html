@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -736,6 +734,29 @@
             font-weight: bold;
             cursor: pointer;
         }
+
+        /* ESTILO PARA CAMPO DE QUANTIDADE NO TOPO DO PDV */
+        .config-pdv-topo {
+            display: flex;
+            gap: 10px;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #333;
+            align-items: center;
+        }
+        .config-pdv-topo label { font-size: 12px; color: var(--warning); font-weight: bold; }
+        .config-pdv-topo input {
+            width: 60px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid var(--primary);
+            background: #000;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body onclick="resetarInatividade()" onkeydown="resetarInatividade()">
@@ -814,10 +835,14 @@
                     <span>Focar Valor Recebido:</span>
                     <input type="text" class="input-tecla" id="key-focar-recebido" readonly onclick="capturarTecla('key-focar-recebido')">
                 </div>
+                <div class="linha-atalho">
+                    <span>Focar Qtd Padrão:</span>
+                    <input type="text" class="input-tecla" id="key-focar-qtd" readonly onclick="capturarTecla('key-focar-qtd')">
+                </div>
             </div>
 
             <div class="grupo-atalho">
-                <h4><h4>📊 Dentro do Histórico</h4>
+                <h4>📊 Dentro do Histórico</h4>
                 <div class="linha-atalho">
                     <span>Zerar Ganhos Hoje:</span>
                     <input type="text" class="input-tecla" id="key-zerar-hoje" readonly onclick="capturarTecla('key-zerar-hoje')">
@@ -881,6 +906,9 @@
         <div class="coluna-direita">
             <div class="secao-disponiveis" style="min-height: 400px;">
                 <h3 style="margin-top:0; text-align:center;">CATÁLOGO RÁPIDO</h3>
+                <div class="busca-container">
+                    <input type="text" id="busca-home" placeholder="🔍 Buscar no catálogo rápido..." oninput="atualizarVisualizacaoHome()">
+                </div>
                 <div class="grid-produtos" id="home-catalogo-view"></div>
                 <p style="text-align: center; color: #666; font-size: 14px; margin-top: 15px;">Use os botões laterais para gerenciar o sistema.</p>
             </div>
@@ -892,6 +920,11 @@
                     
         <div class="layout-scan-pc">
             <div class="camera-lado-esquerdo">
+                <div class="config-pdv-topo">
+                    <label>QUANTIDADE PADRÃO:</label>
+                    <input type="number" id="qtd-multiplicadora" value="1" min="1" onchange="if(this.value < 1) this.value = 1;">
+                    <small style="color: #666; font-size: 10px;">(Ao escanear)</small>
+                </div>
                 <div class="camera-controls">
                     <div id="status-leitura">Pronto para escanear</div>
                     <button class="btn-circle" onclick="girarCamera()">🔁</button>
@@ -1164,6 +1197,7 @@
             baixa: 'F9',
             girarCamera: 'c',
             focarRecebido: 'r',
+            focarQtd: 'q',
             zerarHoje: 'z',
             limparHistorico: 'Delete',
             salvarProduto: 'Enter',
@@ -1345,6 +1379,7 @@
                     if (e.key === configTeclas.baixa) { e.preventDefault(); baixaGeral(); }
                     if (e.key === configTeclas.girarCamera) { e.preventDefault(); girarCamera(); }
                     if (e.key === configTeclas.focarRecebido) { e.preventDefault(); document.getElementById('valor-recebido').focus(); }
+                    if (e.key === configTeclas.focarQtd) { e.preventDefault(); document.getElementById('qtd-multiplicadora').focus(); }
                 }
 
                 // ATALHOS HISTÓRICO (Apenas se modalGen aberto)
@@ -1366,7 +1401,7 @@
             // Verifica se o modal de escaneamento está aberto
             if (document.getElementById('modalSist').style.display === 'flex') {
                 // Se o foco estiver em um input de valor ou quantidade, deixamos o sistema agir normalmente
-                if (document.activeElement.id === 'valor-recebido' || document.activeElement.className.includes('baixa-input')) return;
+                if (document.activeElement.id === 'valor-recebido' || document.activeElement.className.includes('baixa-input') || document.activeElement.id === 'qtd-multiplicadora') return;
                 
                 if (e.key === "Enter") {
                     if (barcodeBuffer.length > 0) {
@@ -1402,6 +1437,7 @@
         function atualizarVisualizacaoHome() {
             const container = document.getElementById('lista-disponiveis');
             const containerCatalogo = document.getElementById('home-catalogo-view');
+            const termoBusca = document.getElementById('busca-home').value.toLowerCase();
             container.innerHTML = "";
             containerCatalogo.innerHTML = "";
             
@@ -1411,6 +1447,10 @@
             }
 
             produtos.forEach(p => {
+                // Logica de busca para a Home
+                const matchBusca = (p.id.toLowerCase().includes(termoBusca) || (p.nome && p.nome.toLowerCase().includes(termoBusca)));
+                
+                // Lado Esquerdo (Disponíveis)
                 const div = document.createElement('div');
                 div.className = 'card-disponivel';
                 if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
@@ -1420,16 +1460,19 @@
                 `;
                 container.appendChild(div);
 
-                const cardCat = document.createElement('div');
-                cardCat.className = 'produto-card';
-                cardCat.innerHTML = `
-                    <img src="${p.img}">
-                    <div class="produto-info">
-                        <b>${p.nome}</b><br>
-                        R$ ${p.valor}
-                    </div>
-                `;
-                containerCatalogo.appendChild(cardCat);
+                // Catálogo Rápido (Lado Direito)
+                if (termoBusca === "" || matchBusca) {
+                    const cardCat = document.createElement('div');
+                    cardCat.className = 'produto-card';
+                    cardCat.innerHTML = `
+                        <img src="${p.img}">
+                        <div class="produto-info">
+                            <b>${p.nome}</b><br>
+                            R$ ${p.valor}
+                        </div>
+                    `;
+                    containerCatalogo.appendChild(cardCat);
+                }
             });
         }
 
@@ -1472,12 +1515,16 @@
 
         function adicionarNaLista(id) {
             const produtoEncontrado = produtos.find(p => p.id === id);
+            
+            // PEGA A QUANTIDADE MULTIPLICADORA DO INPUT NO TOPO
+            const qtdPadrao = parseInt(document.getElementById('qtd-multiplicadora').value) || 1;
+            
             const itemObj = {
                 id: id,
                 nome: produtoEncontrado ? (produtoEncontrado.nome || "Produto Localizado") : "ID Não Cadastrado",
                 img: produtoEncontrado ? produtoEncontrado.img : "https://via.placeholder.com/50",
                 valor: produtoEncontrado ? produtoEncontrado.valor : 0,
-                qtdBaixa: 1, // Adicionado para persistência
+                qtdBaixa: qtdPadrao, // Usa a quantidade definida no topo
                 timestamp: new Date().getTime()
             };
             historico.unshift(itemObj);
@@ -1618,6 +1665,11 @@
             document.getElementById('p-qtd').value = p.qtd;
             document.getElementById('edit-index').value = i;
             window.scrollTo({top: 0, behavior: 'smooth'});
+            
+            // Efeito visual para confirmar carregamento
+            const btnSalvar = document.getElementById('btn-salvar-manual');
+            btnSalvar.style.boxShadow = "0 0 20px var(--primary)";
+            setTimeout(() => { btnSalvar.style.boxShadow = ""; }, 1000);
         }
 
         function excluirProdutoPermanente(i) {
@@ -2086,6 +2138,7 @@
             document.getElementById('key-baixa').value = configTeclas.baixa;
             document.getElementById('key-girar-camera').value = configTeclas.girarCamera;
             document.getElementById('key-focar-recebido').value = configTeclas.focarRecebido;
+            document.getElementById('key-focar-qtd').value = configTeclas.focarQtd;
             document.getElementById('key-zerar-hoje').value = configTeclas.zerarHoje;
             document.getElementById('key-limpar-hist').value = configTeclas.limparHistorico;
             document.getElementById('key-salvar-prod').value = configTeclas.salvarProduto;
@@ -2110,6 +2163,3 @@
     </script>
 </body>
 </html>
-
-
-
