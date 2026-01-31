@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -102,6 +103,7 @@
             <div style="flex:2;"><strong>URL DO SCRIPT (PLANILHA):</strong><br>
                 <input type="text" id="scriptUrl" placeholder="URL do Google Apps Script">
             </div>
+            <button class="btn" style="background:#2ecc71; color:white; padding:10px;" onclick="saveApiConfig()">SALVAR CONFIG</button>
         </div>
 
         <div class="editor">
@@ -319,6 +321,26 @@
             }
         }
 
+        // NOVAS FUNÇÕES: Salvar e Carregar Configurações de API
+        function saveApiConfig() {
+            const config = {
+                token: document.getElementById('apiToken').value,
+                url: document.getElementById('scriptUrl').value,
+                modo: document.getElementById('apiMode').value
+            };
+            localStorage.setItem('configApi', JSON.stringify(config));
+            alert("Configurações de API salvas!");
+        }
+
+        function loadApiConfig() {
+            const saved = JSON.parse(localStorage.getItem('configApi'));
+            if (saved) {
+                document.getElementById('apiToken').value = saved.token || "";
+                document.getElementById('scriptUrl').value = saved.url || "";
+                document.getElementById('apiMode').value = saved.modo || "homologacao";
+            }
+        }
+
         function updatePreview() {
             document.getElementById('outRazao').innerText = document.getElementById('inRazao').value;
             document.getElementById('outCnpj').innerText = "CNPJ: " + document.getElementById('inCnpj').value;
@@ -419,6 +441,7 @@
 
         // Inicialização
         loadEmitente();
+        loadApiConfig(); // Carrega o Token e a URL salvos anteriormente
         renderTabelaNCM();
         addProductRow();
 
