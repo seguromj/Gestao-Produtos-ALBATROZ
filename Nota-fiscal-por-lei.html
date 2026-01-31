@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -109,9 +108,9 @@
         <div class="editor">
             <div class="section-title">Dados do Emitente</div>
             <div class="grid-inputs">
-                <div class="form-group"><label>RAZÃO SOCIAL</label><input type="text" id="inRazao" value="MINHA EMPRESA LTDA" oninput="updatePreview()"></div>
-                <div class="form-group"><label>CNPJ</label><input type="text" id="inCnpj" value="00.000.000/0001-00" oninput="updatePreview()"></div>
-                <div class="form-group"><label>INSC. ESTADUAL</label><input type="text" id="inIE" value="123456789" oninput="updatePreview()"></div>
+                <div class="form-group"><label>RAZÃO SOCIAL</label><input type="text" id="inRazao" value="MINHA EMPRESA LTDA" oninput="updatePreview(); saveEmitente();"></div>
+                <div class="form-group"><label>CNPJ</label><input type="text" id="inCnpj" value="00.000.000/0001-00" oninput="updatePreview(); saveEmitente();"></div>
+                <div class="form-group"><label>INSC. ESTADUAL</label><input type="text" id="inIE" value="123456789" oninput="updatePreview(); saveEmitente();"></div>
             </div>
 
             <div class="section-title">Dados do Cliente (Opcional)</div>
@@ -302,6 +301,25 @@
             reader.readAsText(file);
         }
 
+        // Funções para Salvar/Carregar Dados do Emitente
+        function saveEmitente() {
+            const emitente = {
+                razao: document.getElementById('inRazao').value,
+                cnpj: document.getElementById('inCnpj').value,
+                ie: document.getElementById('inIE').value
+            };
+            localStorage.setItem('dadosEmitente', JSON.stringify(emitente));
+        }
+
+        function loadEmitente() {
+            const saved = JSON.parse(localStorage.getItem('dadosEmitente'));
+            if (saved) {
+                document.getElementById('inRazao').value = saved.razao;
+                document.getElementById('inCnpj').value = saved.cnpj;
+                document.getElementById('inIE').value = saved.ie;
+            }
+        }
+
         function updatePreview() {
             document.getElementById('outRazao').innerText = document.getElementById('inRazao').value;
             document.getElementById('outCnpj').innerText = "CNPJ: " + document.getElementById('inCnpj').value;
@@ -390,6 +408,7 @@
         }
 
         // Inicialização
+        loadEmitente(); // Carrega os dados da empresa antes de atualizar o preview
         renderTabelaNCM();
         addProductRow();
     </script>
