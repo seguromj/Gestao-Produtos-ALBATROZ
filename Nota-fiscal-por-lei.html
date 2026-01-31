@@ -31,6 +31,14 @@
         .product-row input { width: 100%; padding: 8px; border: 1px solid #eee; box-sizing: border-box; }
 
         #preview-cupom { background: white; width: 80mm; padding: 5mm; font-family: 'Courier New', monospace; font-size: 11px; color: #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin: 0 auto; }
+        
+        /* ESTILO NOVO A4 */
+        #preview-a4 { background: white; width: 210mm; min-height: 297mm; padding: 10mm; font-family: Arial, sans-serif; font-size: 10px; color: #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin: 20px auto; display: none; border: 1px solid #ccc; }
+        .a4-header { border: 1px solid #000; padding: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .a4-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .a4-table th, .a4-table td { border: 1px solid #000; padding: 4px; text-align: left; font-size: 9px; }
+        .canhoto { border: 1px dashed #000; padding: 10px; margin-bottom: 10px; font-size: 9px; }
+
         .line { border-top: 1px dashed #000; margin: 5px 0; }
         .bold { font-weight: bold; }
         .center { text-align: center; }
@@ -59,9 +67,11 @@
 
         @media print {
             body * { visibility: hidden; }
-            #preview-cupom, #preview-cupom * { visibility: visible; }
-            #preview-cupom { position: absolute; left: 0; top: 0; width: 80mm; box-shadow: none; margin: 0; padding: 0; }
-            .btn-voltar, .api-config, .editor, .btn, .preview-area > button, .modal { display: none !important; }
+            .print-active, .print-active * { visibility: visible !important; }
+            .print-active { position: absolute; left: 0; top: 0; box-shadow: none; margin: 0; padding: 0; }
+            #preview-cupom.print-active { width: 80mm; }
+            #preview-a4.print-active { width: 210mm; display: block !important; }
+            .btn-voltar, .api-config, .editor, .btn, .preview-area > button, .modal, .select-modelo { display: none !important; }
         }
     </style>
 </head>
@@ -109,8 +119,9 @@
         <div class="editor">
             <div class="section-title">Dados do Emitente</div>
             <div class="grid-inputs">
-                <div class="form-group"><label>RAZÃO SOCIAL</label><input type="text" id="inRazao" value="MINHA EMPRESA LTDA" oninput="updatePreview(); saveEmitente();"></div>
+                <div class="form-group" style="grid-column: span 2;"><label>RAZÃO SOCIAL</label><input type="text" id="inRazao" value="MINHA EMPRESA LTDA" oninput="updatePreview(); saveEmitente();"></div>
                 <div class="form-group"><label>CNPJ</label><input type="text" id="inCnpj" value="00.000.000/0001-00" oninput="updatePreview(); saveEmitente();"></div>
+                <div class="form-group" style="grid-column: span 2;"><label>ENDEREÇO COMPLETO</label><input type="text" id="inEndereco" value="RUA EXEMPLO, 123 - CENTRO - SÃO PAULO/SP" oninput="updatePreview(); saveEmitente();"></div>
                 <div class="form-group"><label>INSC. ESTADUAL</label><input type="text" id="inIE" value="123456789" oninput="updatePreview(); saveEmitente();"></div>
             </div>
 
@@ -159,16 +170,23 @@
                         <option value="17">PIX</option>
                     </select>
                 </div>
-                <div class="form-group"><label>IMPOSTOS APROX.</label><input type="text" id="inImposto" value="R$ 0,00" oninput="updatePreview()"></div>
+                <div class="form-group"><label>VALOR TRIBUTOS (IBPT)</label><input type="text" id="inImposto" value="13.45" oninput="updatePreview()"></div>
             </div>
 
             <button class="btn btn-emitir" onclick="emitirNotaOficial()">EMITIR E SALVAR NA PLANILHA</button>
         </div>
 
         <div class="preview-area">
+            <div class="section-title">Visualização</div>
+            <select id="selectModelo" class="form-group" style="width:100%; padding:10px; margin-bottom:10px;" onchange="alternarModelo()">
+                <option value="cupom">MODELO: CUPOM (80mm)</option>
+                <option value="a4">MODELO: DANFE (A4)</option>
+            </select>
+
             <div id="preview-cupom">
                 <div class="center bold" id="outRazao">EMPRESA</div>
                 <div class="center" id="outCnpj">CNPJ</div>
+                <div class="center" id="outEndCupom" style="font-size: 9px;">ENDEREÇO</div>
                 <div class="line"></div>
                 <div class="center bold">CUPOM FISCAL ELETRÔNICO</div>
                 <div class="center" id="statusNota">AGUARDANDO</div>
@@ -178,6 +196,10 @@
                 <div class="flex bold"><span>TOTAL R$</span> <span id="outTotalGeral">0,00</span></div>
                 <div class="flex"><span>FORMA PAGTO:</span> <span id="outPagto">Dinheiro</span></div>
                 <div class="line"></div>
+                <div class="center" style="font-size: 8px;">
+                    Valor Aproximado dos Tributos: R$ <span id="outImpostoCupom">0,00</span> (Fonte: IBPT)
+                </div>
+                <div class="line"></div>
                 <div class="center">
                     <span id="outData">--</span><br>
                     <span id="outChave" style="font-size:8px;">---</span>
@@ -185,7 +207,58 @@
                 <div class="barcode-container" style="text-align:center;"><svg id="barcode"></svg></div>
                 <div class="qrcode-container" id="qrcode" style="display:flex; justify-content:center;"></div>
             </div>
-            <button class="btn btn-print" onclick="window.print()">IMPRIMIR CUPOM (80mm)</button>
+
+            <div id="preview-a4">
+                <div class="canhoto flex">
+                    <div>RECEBEMOS DE <span class="bold a4RazaoRef">EMPRESA</span> OS PRODUTOS CONSTANTES DA NOTA FISCAL INDICADA AO LADO</div>
+                    <div style="border-left:1px solid #000; padding-left:10px; text-align:center;">NF-e<br>Nº 001</div>
+                </div>
+                <div class="a4-header">
+                    <div style="width: 50%;">
+                        <strong id="a4Razao">EMPRESA</strong><br>
+                        <span id="a4Endereco">ENDEREÇO</span><br>
+                        <span id="a4Cnpj">CNPJ: 00.000.000/0000-00</span> | <span id="a4IE">IE: 00000000</span>
+                    </div>
+                    <div style="text-align:right; border-left: 1px solid #000; padding-left:10px;">
+                        <strong>DANFE</strong><br>
+                        <span>Documento Auxiliar da<br>Nota Fiscal Eletrônica</span><br>
+                        <strong>SÉRIE: 001</strong>
+                    </div>
+                </div>
+                <div style="border:1px solid #000; padding:10px; margin-bottom:10px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="width: 60%;">
+                        <strong>CHAVE DE ACESSO:</strong><br>
+                        <span id="a4Chave" style="font-size: 11px;">---</span>
+                    </div>
+                    <div style="text-align:center;"><svg id="barcodeA4"></svg></div>
+                </div>
+                <div style="border:1px solid #000; padding:5px; margin-bottom: 5px;">
+                    <strong>PROTOCOLO DE AUTORIZAÇÃO:</strong> <span id="a4Protocolo">---</span>
+                </div>
+                <div style="border:1px solid #000; padding:10px;">
+                    <strong>DESTINATÁRIO:</strong><br>
+                    <span id="a4Cliente">Consumidor Final</span>
+                </div>
+                <table class="a4-table">
+                    <thead>
+                        <tr>
+                            <th>DESCRIÇÃO</th>
+                            <th>NCM</th>
+                            <th>UN</th>
+                            <th>QTD</th>
+                            <th>VALOR UN.</th>
+                            <th>TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="a4ListItems"></tbody>
+                </table>
+                <div style="margin-top:10px; border: 1px solid #000; padding: 10px; display: flex; justify-content: space-between;">
+                    <div><strong>TRIBUTOS (IBPT):</strong> R$ <span id="a4Imposto">0,00</span></div>
+                    <div class="bold" style="font-size:14px;">TOTAL DA NOTA: R$ <span id="a4TotalGeral">0,00</span></div>
+                </div>
+            </div>
+
+            <button class="btn btn-print" onclick="imprimirNota()">IMPRIMIR NOTA SELECIONADA</button>
             <button class="btn" style="width:100%; margin-top:10px; background:#34495e; color:white;" onclick="baixarPDF()">SALVAR PDF</button>
         </div>
     </div>
@@ -195,9 +268,36 @@
         let dbProdutos = JSON.parse(localStorage.getItem('meusProdutos')) || [
             {ncm: '10063021', nome: 'Arroz Polido'},
             {ncm: '22021000', nome: 'Refrigerantes'},
-            {ncm: '22072019', nome: 'Álcool Etílico'},
-            {ncm: '85171300', nome: 'Smartphones'}
+            {ncm: '22072019', nome: 'Álcool Etílico'}
         ];
+
+        function alternarModelo() {
+            const modelo = document.getElementById('selectModelo').value;
+            if(modelo === 'a4') {
+                document.getElementById('preview-cupom').style.display = 'none';
+                document.getElementById('preview-a4').style.display = 'block';
+            } else {
+                document.getElementById('preview-cupom').style.display = 'block';
+                document.getElementById('preview-a4').style.display = 'none';
+            }
+            updatePreview();
+        }
+
+        function imprimirNota() {
+            const modelo = document.getElementById('selectModelo').value;
+            const cupom = document.getElementById('preview-cupom');
+            const a4 = document.getElementById('preview-a4');
+            
+            cupom.classList.remove('print-active');
+            a4.classList.remove('print-active');
+
+            if(modelo === 'a4') {
+                a4.classList.add('print-active');
+            } else {
+                cupom.classList.add('print-active');
+            }
+            window.print();
+        }
 
         function addProductRow() {
             productCount++;
@@ -302,12 +402,12 @@
             reader.readAsText(file);
         }
 
-        // Funções para Salvar/Carregar Dados do Emitente
         function saveEmitente() {
             const emitente = {
                 razao: document.getElementById('inRazao').value,
                 cnpj: document.getElementById('inCnpj').value,
-                ie: document.getElementById('inIE').value
+                ie: document.getElementById('inIE').value,
+                endereco: document.getElementById('inEndereco').value
             };
             localStorage.setItem('dadosEmitente', JSON.stringify(emitente));
         }
@@ -318,10 +418,10 @@
                 document.getElementById('inRazao').value = saved.razao;
                 document.getElementById('inCnpj').value = saved.cnpj;
                 document.getElementById('inIE').value = saved.ie;
+                document.getElementById('inEndereco').value = saved.endereco || "";
             }
         }
 
-        // NOVAS FUNÇÕES: Salvar e Carregar Configurações de API
         function saveApiConfig() {
             const config = {
                 token: document.getElementById('apiToken').value,
@@ -342,35 +442,77 @@
         }
 
         function updatePreview() {
-            document.getElementById('outRazao').innerText = document.getElementById('inRazao').value;
-            document.getElementById('outCnpj').innerText = "CNPJ: " + document.getElementById('inCnpj').value;
-            document.getElementById('outPagto').innerText = document.getElementById('inPagamento').options[document.getElementById('inPagamento').selectedIndex].text;
-            document.getElementById('statusNota').innerText = document.getElementById('inStatus').value;
-            
-            // Tratamento da Data no Preview
+            const razao = document.getElementById('inRazao').value;
+            const cnpj = document.getElementById('inCnpj').value;
+            const ie = document.getElementById('inIE').value;
+            const endereco = document.getElementById('inEndereco').value;
+            const status = document.getElementById('inStatus').value;
+            const chave = document.getElementById('inChave').value;
+            const protocolo = document.getElementById('inProtocolo').value;
+            const imposto = document.getElementById('inImposto').value;
+            const cliente = document.getElementById('inClienteNome').value || "Consumidor Final";
+
+            // Update Cupom
+            document.getElementById('outRazao').innerText = razao;
+            document.getElementById('outCnpj').innerText = "CNPJ: " + cnpj;
+            document.getElementById('outEndCupom').innerText = endereco;
+            document.getElementById('statusNota').innerText = status;
+            document.getElementById('outChave').innerText = chave;
+            document.getElementById('outImpostoCupom').innerText = imposto;
+
+            // Update A4
+            document.querySelectorAll('.a4RazaoRef').forEach(el => el.innerText = razao);
+            document.getElementById('a4Razao').innerText = razao;
+            document.getElementById('a4Endereco').innerText = endereco;
+            document.getElementById('a4Cnpj').innerText = "CNPJ: " + cnpj;
+            document.getElementById('a4IE').innerText = "IE: " + ie;
+            document.getElementById('a4Chave').innerText = chave;
+            document.getElementById('a4Protocolo').innerText = protocolo;
+            document.getElementById('a4Cliente').innerText = cliente;
+            document.getElementById('a4Imposto').innerText = imposto;
+
             const dataVal = document.getElementById('inData').value;
             if(dataVal) {
                 const d = new Date(dataVal);
                 document.getElementById('outData').innerText = d.toLocaleString('pt-BR');
             }
 
-            document.getElementById('outChave').innerText = document.getElementById('inChave').value;
-
             const descs = document.querySelectorAll('.p-desc');
+            const ncms = document.querySelectorAll('.p-ncm');
             const qtds = document.querySelectorAll('.p-qtd');
             const valores = document.querySelectorAll('.p-valor');
+            
             const outList = document.getElementById('outListItems');
+            const a4List = document.getElementById('a4ListItems');
             
             let total = 0;
             outList.innerHTML = '';
+            a4List.innerHTML = '';
+
             descs.forEach((d, i) => {
-                const sub = (parseFloat(qtds[i].value) || 0) * (parseFloat(valores[i].value) || 0);
+                const q = parseFloat(qtds[i].value) || 0;
+                const v = parseFloat(valores[i].value) || 0;
+                const sub = q * v;
                 total += sub;
+                
                 outList.innerHTML += `<div class="flex"><span>${d.value.toUpperCase()}</span> <span>${sub.toFixed(2)}</span></div>`;
+                
+                a4List.innerHTML += `
+                    <tr>
+                        <td>${d.value.toUpperCase()}</td>
+                        <td>${ncms[i].value}</td>
+                        <td>UN</td>
+                        <td>${q}</td>
+                        <td>${v.toFixed(2)}</td>
+                        <td>${sub.toFixed(2)}</td>
+                    </tr>
+                `;
             });
+
             document.getElementById('outTotalGeral').innerText = total.toFixed(2);
+            document.getElementById('a4TotalGeral').innerText = total.toFixed(2);
             
-            let ch = document.getElementById('inChave').value.replace(/\s/g, '');
+            let ch = chave.replace(/\s/g, '');
             if(ch.length === 44) renderFiscalCodes(ch);
         }
 
@@ -402,20 +544,15 @@
             };
 
             try {
-                const response = await fetch(scriptUrl, {
-                    method: 'POST',
-                    body: JSON.stringify(dadosVenda)
-                });
+                const response = await fetch(scriptUrl, { method: 'POST', body: JSON.stringify(dadosVenda) });
                 const result = await response.json();
 
                 if(result.status === 'autorizado') {
                     document.getElementById('inChave').value = result.chave;
                     document.getElementById('inProtocolo').value = result.protocolo;
-                    // Atualiza o input datetime-local com o momento da autorização
                     const agora = new Date();
                     agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
                     document.getElementById('inData').value = agora.toISOString().slice(0, 16);
-                    
                     document.getElementById('inStatus').value = "EMITIDA COM SUCESSO";
                     updatePreview();
                     alert("NOTA FISCAL VÁLIDA E SALVA NA PLANILHA!");
@@ -431,21 +568,29 @@
 
         function renderFiscalCodes(chave) {
             JsBarcode("#barcode", chave, { format: "CODE128", width: 1.1, height: 40, displayValue: false });
+            JsBarcode("#barcodeA4", chave, { format: "CODE128", width: 1.5, height: 40, displayValue: false });
             document.getElementById("qrcode").innerHTML = "";
             new QRCode(document.getElementById("qrcode"), { text: "https://www.nfce.fazenda.sp.gov.br/consulta?chNFe=" + chave, width: 100, height: 100 });
         }
 
         function baixarPDF() {
-            html2pdf().from(document.getElementById('preview-cupom')).save();
+            const modelo = document.getElementById('selectModelo').value;
+            const element = modelo === 'a4' ? document.getElementById('preview-a4') : document.getElementById('preview-cupom');
+            const opt = {
+                margin: 0,
+                filename: 'nota_fiscal.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: modelo === 'a4' ? 'a4' : [80, 297], orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
         }
 
-        // Inicialização
         loadEmitente();
-        loadApiConfig(); // Carrega o Token e a URL salvos anteriormente
+        loadApiConfig();
         renderTabelaNCM();
         addProductRow();
 
-        // Define a data atual no input ao carregar
         const agora = new Date();
         agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
         document.getElementById('inData').value = agora.toISOString().slice(0, 16);
