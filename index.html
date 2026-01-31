@@ -1679,7 +1679,7 @@
                         <button class="btn-edit-prod" onclick="editarProduto(${i})">✏️</button>
                         <button class="btn-del-prod" onclick="excluirProdutoPermanente(${i})">X</button>
                         <img src="${p.img}"><div class="produto-info"><b>${p.nome || 'Sem Nome'}</b><br>
-                        <small>ID: ${p.id}</small><br>R$ ${p.valor}<br>
+                        <small>ID<i class="fa-solid fa-barcode"></i>: ${p.id}</small><br>R$ ${p.valor}<br>
                         <span style="color:var(--success); font-weight:bold;">Estoque: ${p.qtd}</span></div></div>`;
                 }
             });
@@ -1920,7 +1920,7 @@
 
         // NOVA FUNÇÃO PARA CANCELAR VENDA INDIVIDUAL (ESTILO VISUAL)
         function cancelarVendaIndividual(index) {
-            if(confirm("Deseja realmente CANCELAR esta venda? Ela continuará na lista, mas com valor zerado.")) {
+            if(confirm("Deseja realmente CANCELAR esta venda?")) {
                 vendasRealizadas[index].cancelada = true;
                 localStorage.setItem('historico_vendas', JSON.stringify(vendasRealizadas));
                 renderizarHistoricoVendas();
@@ -2198,4 +2198,5 @@
     </script>
 </body>
 </html>
+
 
