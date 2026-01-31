@@ -13,11 +13,9 @@
         
         .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 30px; max-width: 1400px; margin: 0 auto; }
 
-        /* Header de Configuração */
         .api-config { grid-column: 1 / -1; background: var(--primary); color: white; padding: 20px; border-radius: 12px; display: flex; gap: 20px; align-items: center; }
         .api-config input, .api-config select { padding: 10px; border-radius: 5px; border: none; flex: 1; }
 
-        /* Área de Edição */
         .editor { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .section-title { font-size: 14px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; border-bottom: 1px solid #eee; margin: 20px 0 15px; padding-bottom: 5px; }
         
@@ -26,46 +24,53 @@
         .form-group label { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
         .form-group input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
 
-        /* Tabela de Produtos */
         .product-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .product-table th { background: #f1f2f6; font-size: 11px; padding: 10px; text-align: left; }
         .product-row td { padding: 5px; }
         .product-row input { width: 100%; padding: 8px; border: 1px solid #eee; box-sizing: border-box; }
 
-        /* Cupom Estilo Térmico */
         #preview-cupom { background: white; width: 80mm; padding: 5mm; font-family: 'Courier New', monospace; font-size: 11px; color: #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin: 0 auto; }
         .line { border-top: 1px dashed #000; margin: 5px 0; }
         .bold { font-weight: bold; }
         .center { text-align: center; }
         .flex { display: flex; justify-content: space-between; }
 
-        /* Botões */
         .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-emitir { background: var(--accent); color: white; width: 100%; font-size: 16px; margin-top: 20px; }
         .btn-add { background: #3498db; color: white; padding: 8px 15px; font-size: 12px; }
 
-        @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .preview-area { order: -1; } }
-
-        .btn-voltar {
-            background: #222;
-            color: #fff;
-            border: 1px solid #444;
-            padding: 10px 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            align-self: flex-start;
-            cursor: pointer;
-            flex-shrink: 0;
-            font-size: 14px;
-            font-weight: bold;
-        }
+        .btn-voltar { background: #222; color: #fff; border: 1px solid #444; padding: 10px 20px; margin-bottom: 20px; border-radius: 8px; align-self: flex-start; cursor: pointer; flex-shrink: 0; font-size: 14px; font-weight: bold; }
+        
+        .btn-ncm { background: #7f8c8d; color: white; border: none; padding: 2px 5px; font-size: 10px; cursor: pointer; border-radius: 3px; display: block; margin-bottom: 2px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 60%; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .ncm-list-table { width: 100%; border-collapse: collapse; }
+        .ncm-list-table th, .ncm-list-table td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
+        .ncm-list-table tr:hover { background: #f1f1f1; cursor: pointer; }
+        .search-ncm { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
 <body>
 
+    <div id="modalNCM" class="modal">
+        <div class="modal-content">
+            <h3>Lista Geral de NCM</h3>
+            <input type="text" class="search-ncm" id="searchNCM" placeholder="Filtrar..." onkeyup="filterNCM()">
+            <table class="ncm-list-table" id="ncmTable">
+                <thead><tr><th>NCM</th><th>DESCRIÇÃO</th></tr></thead>
+                <tbody>
+                    <tr onclick="selectNCM('10063021')"><td>10063021</td><td>Arroz Polido</td></tr>
+                    <tr onclick="selectNCM('22021000')"><td>22021000</td><td>Refrigerantes</td></tr>
+                    <tr onclick="selectNCM('22072019')"><td>22072019</td><td>Álcool Etílico</td></tr>
+                    <tr onclick="selectNCM('85171300')"><td>85171300</td><td>Smartphones</td></tr>
+                </tbody>
+            </table>
+            <button onclick="document.getElementById('modalNCM').style.display='none'">Fechar</button>
+        </div>
+    </div>
+
     <div class="main-grid">
-        <a href="index.html">
-        <button class="btn-voltar">← VOLTAR</button></a>
+        <button class="btn-voltar" onclick="location.href='index.html'">← VOLTAR</button>
         <div class="api-config">
             <div><strong>MODO:</strong><br>
                 <select id="apiMode">
@@ -74,73 +79,85 @@
                 </select>
             </div>
             <div style="flex:2;"><strong>TOKEN DA API:</strong><br>
-                <input type="password" id="apiToken" placeholder="Insira o Token do seu gateway (FocusNFe, Nuvem Fiscal, etc)">
+                <input type="password" id="apiToken" placeholder="Insira seu Token FocusNFe">
+            </div>
+            <div style="flex:2;"><strong>URL DO SCRIPT (PLANILHA):</strong><br>
+                <input type="text" id="scriptUrl" placeholder="URL do Google Apps Script">
             </div>
         </div>
 
         <div class="editor">
-            <div class="section-title">Dados do Emitente (Sua Empresa)</div>
+            <div class="section-title">Dados do Emitente</div>
             <div class="grid-inputs">
                 <div class="form-group"><label>RAZÃO SOCIAL</label><input type="text" id="inRazao" value="MINHA EMPRESA LTDA" oninput="updatePreview()"></div>
                 <div class="form-group"><label>CNPJ</label><input type="text" id="inCnpj" value="00.000.000/0001-00" oninput="updatePreview()"></div>
                 <div class="form-group"><label>INSC. ESTADUAL</label><input type="text" id="inIE" value="123456789" oninput="updatePreview()"></div>
             </div>
 
-            <div class="section-title">Itens da Venda (Obrigatório para SEFAZ)</div>
+            <div class="section-title">Dados do Cliente (Opcional)</div>
+            <div class="grid-inputs">
+                <div class="form-group" style="grid-column: span 2;"><label>NOME/RAZÃO DO CLIENTE</label><input type="text" id="inClienteNome" placeholder="Consumidor Final" oninput="updatePreview()"></div>
+                <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="inClienteDoc" placeholder="000.000.000-00" oninput="updatePreview()"></div>
+            </div>
+
+            <div class="section-title">Itens da Venda</div>
             <table class="product-table">
                 <thead>
                     <tr>
                         <th>DESCRIÇÃO</th>
-                        <th width="80">NCM</th>
+                        <th width="80"><button class="btn-ncm" onclick="document.getElementById('modalNCM').style.display='block'">BUSCAR</button>NCM</th>
                         <th width="60">QTD</th>
                         <th width="100">VALOR UN.</th>
                         <th width="40"></th>
                     </tr>
                 </thead>
-                <tbody id="productItems">
-                    </tbody>
+                <tbody id="productItems"></tbody>
             </table>
             <button class="btn btn-add" onclick="addProductRow()">+ NOVO PRODUTO</button>
 
-            <div class="section-title">Pagamento e Lei da Transparência</div>
+            <div class="section-title">Dados Fiscais (Retorno SEFAZ)</div>
             <div class="grid-inputs">
-                <div class="form-group"><label>FORMA DE PAGAMENTO</label>
-                    <select id="inPagamento" onchange="updatePreview()">
-                        <option value="Dinheiro">Dinheiro</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito</option>
-                        <option value="PIX">PIX</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>TRIBUTOS APROX. (LEI 12.741)</label><input type="text" id="inImposto" value="R$ 5,40 (12%)" oninput="updatePreview()"></div>
+                <div class="form-group"><label>STATUS</label><input type="text" id="inStatus" value="AGUARDANDO TRANSMISSÃO" oninput="updatePreview()"></div>
+                <div class="form-group"><label>DATA/HORA</label><input type="text" id="inData" value="--/--/---- --:--:--" oninput="updatePreview()"></div>
+                <div class="form-group"><label>PROTOCOLO</label><input type="text" id="inProtocolo" value="---" oninput="updatePreview()"></div>
+                <div class="form-group" style="grid-column: span 3;"><label>CHAVE DE ACESSO</label><input type="text" id="inChave" placeholder="Gerado automaticamente" oninput="updatePreview()"></div>
             </div>
 
-            <button class="btn btn-emitir" onclick="emitirNotaOficial()">EMITIR E ASSINAR VIA SEFAZ</button>
+            <div class="section-title">Pagamento</div>
+            <div class="grid-inputs">
+                <div class="form-group">
+                    <label>FORMA</label>
+                    <select id="inPagamento" onchange="updatePreview()">
+                        <option value="01">Dinheiro</option>
+                        <option value="03">Cartão de Crédito</option>
+                        <option value="17">PIX</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>IMPOSTOS APROX.</label><input type="text" id="inImposto" value="R$ 0,00" oninput="updatePreview()"></div>
+            </div>
+
+            <button class="btn btn-emitir" onclick="emitirNotaOficial()">EMITIR E SALVAR NA PLANILHA</button>
         </div>
 
         <div class="preview-area">
             <div id="preview-cupom">
-                <div class="center bold" id="outRazao">NOME DA EMPRESA</div>
-                <div class="center" id="outCnpj">CNPJ: 00.000.000/0001-00</div>
-                <div class="center" id="outIE">IE: 123456789</div>
+                <div class="center bold" id="outRazao">EMPRESA</div>
+                <div class="center" id="outCnpj">CNPJ</div>
                 <div class="line"></div>
-                <div class="center bold">CUPOM FISCAL ELETRÔNICO - SAT</div>
-                <div class="center" id="statusNota" style="background:#eee; margin:5px 0;">AGUARDANDO TRANSMISSÃO</div>
+                <div class="center bold">CUPOM FISCAL ELETRÔNICO</div>
+                <div class="center" id="statusNota">AGUARDANDO</div>
                 <div class="line"></div>
-                <div class="flex" style="font-size:9px;"><span>DESC | QTD | UN | VL UN</span> <span>TOTAL</span></div>
                 <div id="outListItems"></div>
                 <div class="line"></div>
-                <div class="flex bold" style="font-size:14px;"><span>TOTAL R$</span> <span id="outTotalGeral">0,00</span></div>
+                <div class="flex bold"><span>TOTAL R$</span> <span id="outTotalGeral">0,00</span></div>
                 <div class="flex"><span>FORMA PAGTO:</span> <span id="outPagto">Dinheiro</span></div>
                 <div class="line"></div>
-                <div style="font-size:9px;" id="outObs"></div>
-                <div class="center" style="margin-top:10px;">
-                    <span id="outData">--/--/---- --:--:--</span><br>
-                    <small>CHAVE DE ACESSO</small><br>
-                    <span id="outChave" style="font-size:8px;">0000 0000 0000 0000 0000 0000 0000 0000 0000 0000</span>
+                <div class="center">
+                    <span id="outData">--</span><br>
+                    <span id="outChave" style="font-size:8px;">---</span>
                 </div>
-                <div class="barcode-container"><svg id="barcode"></svg></div>
-                <div class="qrcode-container" id="qrcode"></div>
-                <div class="center" style="font-size:8px;">Protocolo: <span id="outProtocolo">---</span></div>
+                <div class="barcode-container" style="text-align:center;"><svg id="barcode"></svg></div>
+                <div class="qrcode-container" id="qrcode" style="display:flex; justify-content:center;"></div>
             </div>
             <button class="btn" style="width:100%; margin-top:10px; background:#34495e; color:white;" onclick="baixarPDF()">SALVAR PDF</button>
         </div>
@@ -165,12 +182,20 @@
             updatePreview();
         }
 
+        function selectNCM(valor) {
+            const inputs = document.querySelectorAll('.p-ncm');
+            if(inputs.length > 0) inputs[inputs.length - 1].value = valor;
+            document.getElementById('modalNCM').style.display = 'none';
+            updatePreview();
+        }
+
         function updatePreview() {
-            document.getElementById('outRazao').innerText = document.getElementById('inRazao').value.toUpperCase();
+            document.getElementById('outRazao').innerText = document.getElementById('inRazao').value;
             document.getElementById('outCnpj').innerText = "CNPJ: " + document.getElementById('inCnpj').value;
-            document.getElementById('outIE').innerText = "IE: " + document.getElementById('inIE').value;
-            document.getElementById('outPagto').innerText = document.getElementById('inPagamento').value;
-            document.getElementById('outObs').innerText = "Tributos aproximados: " + document.getElementById('inImposto').value;
+            document.getElementById('outPagto').innerText = document.getElementById('inPagamento').options[document.getElementById('inPagamento').selectedIndex].text;
+            document.getElementById('statusNota').innerText = document.getElementById('inStatus').value;
+            document.getElementById('outData').innerText = document.getElementById('inData').value;
+            document.getElementById('outChave').innerText = document.getElementById('inChave').value;
 
             const descs = document.querySelectorAll('.p-desc');
             const qtds = document.querySelectorAll('.p-qtd');
@@ -179,69 +204,82 @@
             
             let total = 0;
             outList.innerHTML = '';
-
             descs.forEach((d, i) => {
-                const q = parseFloat(qtds[i].value) || 0;
-                const v = parseFloat(valores[i].value) || 0;
-                const sub = q * v;
+                const sub = (parseFloat(qtds[i].value) || 0) * (parseFloat(valores[i].value) || 0);
                 total += sub;
-                outList.innerHTML += `<div class="flex"><span>${d.value.toUpperCase()}</span> <span>${sub.toFixed(2)}</span></div>
-                                      <div style="font-size:9px;">${q} UN x ${v.toFixed(2)}</div>`;
+                outList.innerHTML += `<div class="flex"><span>${d.value.toUpperCase()}</span> <span>${sub.toFixed(2)}</span></div>`;
             });
-
             document.getElementById('outTotalGeral').innerText = total.toFixed(2);
+            
+            let ch = document.getElementById('inChave').value.replace(/\s/g, '');
+            if(ch.length === 44) renderFiscalCodes(ch);
         }
 
         async function emitirNotaOficial() {
+            const scriptUrl = document.getElementById('scriptUrl').value;
             const token = document.getElementById('apiToken').value;
-            if(!token) return alert("Erro: Você precisa inserir o TOKEN da sua API no topo.");
+            if(!scriptUrl || !token) return alert("Configure a URL do Script e o Token!");
 
             const btn = document.querySelector('.btn-emitir');
-            btn.innerText = "ASSINANDO E TRANSMITINDO...";
-            btn.disabled = true;
+            btn.innerText = "PROCESSANDO..."; btn.disabled = true;
+
+            // Coleta itens para o JSON oficial
+            const itens = [];
+            document.querySelectorAll('.product-row').forEach(row => {
+                itens.push({
+                    nome: row.querySelector('.p-desc').value,
+                    ncm: row.querySelector('.p-ncm').value,
+                    quantidade: row.querySelector('.p-qtd').value,
+                    valor_unitario: row.querySelector('.p-valor').value
+                });
+            });
+
+            const dadosVenda = {
+                token: token,
+                ambiente: document.getElementById('apiMode').value === 'producao' ? '1' : '2',
+                cliente_nome: document.getElementById('inClienteNome').value,
+                cliente_cpf: document.getElementById('inClienteDoc').value,
+                pagamento: document.getElementById('inPagamento').value,
+                itens: itens
+            };
 
             try {
-                // Aqui o sistema faz a chamada REAL para a SEFAZ via API
-                // Exemplo de estrutura que a maioria das APIs usa
-                const response = await fetch('https://api.focusnfe.com.br/v2/nfce?token=' + token, {
+                // Envia para o Google Apps Script (Sua Planilha + Integração API)
+                const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    body: JSON.stringify({ /* Aqui iriam os dados colhidos do formulário */ })
+                    body: JSON.stringify(dadosVenda)
                 });
+                const result = await response.json();
 
-                // Simulando resposta positiva (Em um cenário real, os dados viriam do 'response')
-                await new Promise(r => setTimeout(r, 2000));
-                const chaveGerada = "352601" + Math.floor(Math.random() * 10000000000000000000000000000000000000);
-                
-                // Atualiza o Cupom com Dados Oficiais
-                document.getElementById('outChave').innerText = chaveGerada.replace(/(.{4})/g, '$1 ');
-                document.getElementById('outProtocolo').innerText = "13526000" + Math.floor(Math.random() * 999999);
-                document.getElementById('statusNota').innerText = "EMITIDA COM SUCESSO";
-                document.getElementById('statusNota').style.background = "#27ae60";
-                document.getElementById('statusNota').style.color = "white";
-                document.getElementById('outData').innerText = new Date().toLocaleString();
-
-                renderFiscalCodes(chaveGerada);
-                alert("NOTA FISCAL AUTORIZADA PELA SEFAZ!");
+                if(result.status === 'autorizado') {
+                    document.getElementById('inChave').value = result.chave;
+                    document.getElementById('inProtocolo').value = result.protocolo;
+                    document.getElementById('inData').value = new Date().toLocaleString();
+                    document.getElementById('inStatus').value = "EMITIDA COM SUCESSO";
+                    updatePreview();
+                    alert("NOTA FISCAL VÁLIDA E SALVA NA PLANILHA!");
+                } else {
+                    alert("Erro SEFAZ: " + result.mensagem);
+                }
             } catch (e) {
-                alert("Erro na conexão.");
+                alert("Erro na conexão com o Script da Planilha.");
             } finally {
-                btn.innerText = "EMITIR E ASSINAR VIA SEFAZ";
-                btn.disabled = false;
+                btn.innerText = "EMITIR E SALVAR NA PLANILHA"; btn.disabled = false;
             }
         }
 
         function renderFiscalCodes(chave) {
-            JsBarcode("#barcode", chave.substring(0,44), { format: "CODE128", width: 1.1, height: 40, displayValue: false });
+            JsBarcode("#barcode", chave, { format: "CODE128", width: 1.1, height: 40, displayValue: false });
             document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: "https://www.fazenda.sp.gov.br/sat/consulta?chave=" + chave, width: 110, height: 110 });
+            new QRCode(document.getElementById("qrcode"), { text: "https://www.nfce.fazenda.sp.gov.br/consulta?chNFe=" + chave, width: 100, height: 100 });
         }
 
         function baixarPDF() {
-            const element = document.getElementById('preview-cupom');
-            html2pdf().set({ margin: 0, filename: 'cupom_fiscal.pdf', html2canvas: { scale: 3 }, jsPDF: { unit: 'mm', format: [80, 250] } }).from(element).save();
+            html2pdf().from(document.getElementById('preview-cupom')).save();
         }
 
         addProductRow();
     </script>
 </body>
 </html>
+
