@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -143,7 +142,7 @@
             <div class="section-title">Dados Fiscais (Retorno SEFAZ)</div>
             <div class="grid-inputs">
                 <div class="form-group"><label>STATUS</label><input type="text" id="inStatus" value="AGUARDANDO TRANSMISSÃO" oninput="updatePreview()"></div>
-                <div class="form-group"><label>DATA/HORA</label><input type="text" id="inData" value="--/--/---- --:--:--" oninput="updatePreview()"></div>
+                <div class="form-group"><label>DATA/HORA</label><input type="datetime-local" id="inData" oninput="updatePreview()"></div>
                 <div class="form-group"><label>PROTOCOLO</label><input type="text" id="inProtocolo" value="---" oninput="updatePreview()"></div>
                 <div class="form-group" style="grid-column: span 3;"><label>CHAVE DE ACESSO</label><input type="text" id="inChave" placeholder="Gerado automaticamente" oninput="updatePreview()"></div>
             </div>
@@ -325,7 +324,14 @@
             document.getElementById('outCnpj').innerText = "CNPJ: " + document.getElementById('inCnpj').value;
             document.getElementById('outPagto').innerText = document.getElementById('inPagamento').options[document.getElementById('inPagamento').selectedIndex].text;
             document.getElementById('statusNota').innerText = document.getElementById('inStatus').value;
-            document.getElementById('outData').innerText = document.getElementById('inData').value;
+            
+            // Tratamento da Data no Preview
+            const dataVal = document.getElementById('inData').value;
+            if(dataVal) {
+                const d = new Date(dataVal);
+                document.getElementById('outData').innerText = d.toLocaleString('pt-BR');
+            }
+
             document.getElementById('outChave').innerText = document.getElementById('inChave').value;
 
             const descs = document.querySelectorAll('.p-desc');
@@ -383,7 +389,11 @@
                 if(result.status === 'autorizado') {
                     document.getElementById('inChave').value = result.chave;
                     document.getElementById('inProtocolo').value = result.protocolo;
-                    document.getElementById('inData').value = new Date().toLocaleString();
+                    // Atualiza o input datetime-local com o momento da autorização
+                    const agora = new Date();
+                    agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+                    document.getElementById('inData').value = agora.toISOString().slice(0, 16);
+                    
                     document.getElementById('inStatus').value = "EMITIDA COM SUCESSO";
                     updatePreview();
                     alert("NOTA FISCAL VÁLIDA E SALVA NA PLANILHA!");
@@ -408,9 +418,16 @@
         }
 
         // Inicialização
-        loadEmitente(); // Carrega os dados da empresa antes de atualizar o preview
+        loadEmitente();
         renderTabelaNCM();
         addProductRow();
+
+        // Define a data atual no input ao carregar
+        const agora = new Date();
+        agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+        document.getElementById('inData').value = agora.toISOString().slice(0, 16);
+        updatePreview();
     </script>
 </body>
 </html>
+
