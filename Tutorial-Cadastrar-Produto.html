@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Como cadastrar um Produto</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(to bottom, #ffffff, #f5f5f5, #ffffff);
+            --step-number-color: #a31d21;
+            --text-color: #333;
+            --shadow: 0 4px 10px rgba(0,0,0,0.1);
+            --accent-color: #d32f2f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg-gradient);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .typing-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            color: #222;
+            font-size: 24px;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            border-right: 3px solid var(--accent-color);
+            animation: typing 2s steps(25) forwards, blink 0.7s infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Delays para os 11 passos e setas */
+        .d-img { animation-delay: 1.8s; }
+        .d-hr  { animation-delay: 2.0s; }
+        .s1    { animation-delay: 2.2s; }
+        .s2    { animation-delay: 2.5s; }
+        .s3    { animation-delay: 2.8s; }
+        .s4    { animation-delay: 3.1s; }
+        .s5    { animation-delay: 3.4s; }
+        .s6    { animation-delay: 3.7s; }
+        .s7    { animation-delay: 4.0s; }
+        .s8    { animation-delay: 4.3s; }
+        .s9    { animation-delay: 4.6s; }
+        .s10   { animation-delay: 4.9s; }
+        .s11   { animation-delay: 5.2s; }
+        .f-nt  { animation-delay: 5.5s; }
+
+        .topo-img {
+            display: block;
+            margin: 0 auto;
+            width: 120px;
+            height: 120px;
+            border-radius: 20%;
+            object-fit: cover;
+            border: 3px solid #eee;
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #ccc, transparent);
+            margin: 30px 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .step-image {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding-right: 20px;
+        }
+
+        .step-image img {
+            max-width: 100%;
+            height: auto;
+            box-shadow: var(--shadow);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-zoom {
+            margin-top: 8px;
+            padding: 4px 10px;
+            font-size: 11px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            color: #666;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-zoom:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .step-text {
+            flex: 1;
+            padding-left: 10px;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--text-color);
+        }
+
+        .step-number {
+            color: var(--step-number-color);
+            font-size: 26px;
+            font-weight: 800;
+            margin-right: 8px;
+            float: left;
+            line-height: 0.8;
+        }
+
+        .arrow-container {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .custom-arrow {
+            width: 28px;
+            height: auto;
+            opacity: 0.6;
+            transform: rotate(90deg);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        .footer-note {
+            margin-top: 40px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fdf2f2;
+            border-left: 4px solid var(--accent-color);
+            font-size: 13px;
+        }
+    .imagem-alerta {
+        text-align: center;
+    }
+    </style>
+</head>
+<body>
+
+<div id="imageModal" class="modal">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="imgExpanded">
+</div>
+
+<div class="container">
+    <div class="typing-container">
+        <h3>Como cadastrar um Produto</h3>
+    </div>
+    
+    <div class="fade-in d-img">
+        <img src="https://i.ibb.co/r2jFCgP6/1000135167.png" alt="Operador" class="topo-img">
+    
+        <p style="text-align: center;">Para cadastrar um produto em nosso sistema é muito simplis</p>
+        <h2 style="text-align: center;">TUTORIAL</h2>
+    </di>
+ 
+    <hr class="fade-in d-hr">
+    <div class="step fade-in s1">
+        <div class="step-image">
+            <img src="https://i.ibb.co/h1T648K8/1000135624.jpg" alt="Passo 1" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+        </div>
+        <div class="step-text">
+            <span class="step-number"> <i class="fa-solid fa-newspaper"></i></span><b>Formulário</b><br>De inicio você irá visualizar esse formulário da imagem. <br>←<hr><b>Calma</b> irei explicar como preencher cada campo desse. 
+        </div>
+    </div>
+    <div class="arrow-container fade-in s1"><img src="https://i.ibb.co/27YwMks8/1000135182.jpg" class="custom-arrow"></div>
+    
+    <hr>
+    <div class="step fade-in s2">
+        <div class="step-image">
+            <img src="https://i.ibb.co/KpXRcspQ/1000135724.jpg" alt="Passo 2" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+        </div>
+        <div class="step-text"><span class="step-number">1</span><b>Nome do Produto</b><br> O primeiro campo do <b>Formulario</b> é para colocar o nome dos produtos, por Exemplo:<br> <b>Coca Cola em lata 350ml</b></div>
+    </div>
+    <div class="arrow-container fade-in s2"><img src="https://i.ibb.co/27YwMks8/1000135182.jpg" class="custom-arrow"></div>
+
+    <hr>
+    <div class="step fade-in s3">
+        <div class="step-image">
+            <img src="https://i.ibb.co/C3vzzH56/1000135750.jpg" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+
+            <p style="font-size: 10px;">↓Exemplo Codigo de barra↓</p><br>
+            <img src="https://i.ibb.co/p6b5zYQm/1000135888.png" onclick="expandImage(this)">
+            
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+        </div>
+        <div class="step-text"><span class="step-number">2</span><i class="fa-solid fa-qrcode"></i> <i class="fa-solid fa-barcode"></i><br>
+            <b> * ID do Produto (Código de Barras)</b>
+​            No segundo campo você deve inserir a identificação única do item. ​O que usar: Pode ser o número do código de barras (<b>EAN13, CODE128</b>), um <b>QR Code</b> ou até um código interno que você utilize para controle.</div>
+    </div>
+    <div class="arrow-container fade-in s3"><img src="https://i.ibb.co/27YwMks8/1000135182.jpg" class="custom-arrow"></div>
+
+    <hr>
+    <div class="imagem-alerta">
+         <h4>Imagem do Produto</h4>
+         <p><strong style="font-size: 13px; color: red;">(O passo mais importante!)</strong></p>
+​         <p>Você pode utilizar o <b>Google Imagens</b> para copiar a URL do seu produto e colá-la no campo correspondente. No entanto, <b>lembre-se</b>: se o site de origem remover a foto ou o servidor ficar fora do ar, a imagem desaparecerá do seu catálogo. Para maior segurança, recomendamos hospedar a imagem diretamente no sistema.</p>
+    <br>
+    </div>
+    <div class="step fade-in s4">
+        
+        <div class="step-image">
+            <img src="https://i.ibb.co/5W1rYZqz/1000135908.jpg" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button><p>____________________</p>
+             <img src="https://i.ibb.co/ksws7VVM/1000135918.jpg" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+        </div>
+        <div class="step-text"><span class="step-number">3</span><i class="fa-solid fa-image"></i><br><b style="font-size: 11px;">Hospedar a imagem</b>
+            <p>Sempre que você clica em "Hospedar Imagem", acontece o seguinte: ​Upload: O sistema "sobe" o arquivo do seu dispositivo para a nuvem. ​Processamento: O servidor recebe o arquivo e gera um endereço único (link) para ele. </p>
+            <p>Link Direto: Esse endereço é o que você cola no campo "Link da Imagem". É como se fosse o "CPF" daquela foto na internet.</p>
+            <p>Agora basta clicar: <b>Cópia Link</b> e colo-lá no campo: Link da Imagem</p>
+        </div>
+    </div>
+    <div class="arrow-container fade-in s4"><img src="https://i.ibb.co/27YwMks8/1000135182.jpg" class="custom-arrow"></div>
+
+    <hr>
+    <div class="step fade-in s5">
+        <div class="step-image">
+            <img src="https://i.ibb.co/1Y64kPZs/1000136440.jpg" onclick="expandImage(this)">
+            <button class="btn-zoom" onclick="expandImage(this.previousElementSibling)"><i class="fas fa-search-plus"></i> Ver imagem</button>
+        </div>
+        <div class="step-text"><span class="step-number">4</span> 
+            Preço e Estoque
+            Agora esse dois campos<br> ← não tem segredo.<br><hr>
+            o primeiro é o valor do produto<hr>
+            o segundo é a quantidade em estoque
+            
+        </div>
+    </div>
+    <div class="arrow-container fade-in s5"><img src="https://i.ibb.co/27YwMks8/1000135182.jpg" class="custom-arrow"></div>
+
+    <hr style="background-color: red;">
+    <div>
+        <span>Agora com os campos todos preenchidos, basta Clicar no bitão verde (SALVAR NO CATÁLAGO).</span>
+          <hr style="background-color: red;">
+        <span>O botão: <b>📤 EXPORTAR BACKUP</span></b><br>
+            <p>Ele baixa um arquico json de todas as alteração que esta presete.</p>
+            <p style="color: red;">Recomendamos fazer isso para não perder os produtos salvos.</p>
+            <span>O botão:<b>📥 IMPORTAR BACKUP</b></span>
+            <p>Ele requer o arquivo json</p>
+            <p>Com isso você tem todos os seu produtos, historico de vendas todos salvos.</p>
+            <p>E se você entrar em nosso sistema em outro aparelho e quer ver a mesma atualizaçao, basta importa o arquivo json</p>
+            
+    </div>
+  
+    <hr>
+    <div class="footer-note fade-in f-nt">
+        <b>* SUPORTE:</b> Qualquer duvida, não hesite em nos contatar.
+    </div>
+</div>
+
+<script>
+    function expandImage(imgElement) {
+        var modal = document.getElementById("imageModal");
+        var expandedImg = document.getElementById("imgExpanded");
+        modal.style.display = "flex";
+        expandedImg.src = imgElement.src;
+    }
+    document.querySelector('.close-modal').onclick = function() {
+        document.getElementById("imageModal").style.display = "none";
+    }
+    window.onclick = function(event) {
+        var modal = document.getElementById("imageModal");
+        if (event.target == modal) { modal.style.display = "none"; }
+    }
+</script>
+
+</body>
+</html>
