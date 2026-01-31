@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -38,6 +40,7 @@
         .btn { padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-emitir { background: var(--accent); color: white; width: 100%; font-size: 16px; margin-top: 20px; }
         .btn-add { background: #3498db; color: white; padding: 8px 15px; font-size: 12px; }
+        .btn-print { background: #f39c12; color: white; width: 100%; margin-top: 10px; }
 
         .btn-voltar { background: #222; color: #fff; border: 1px solid #444; padding: 10px 20px; margin-bottom: 20px; border-radius: 8px; align-self: flex-start; cursor: pointer; flex-shrink: 0; font-size: 14px; font-weight: bold; }
         
@@ -48,23 +51,40 @@
         .ncm-list-table th, .ncm-list-table td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
         .ncm-list-table tr:hover { background: #f1f1f1; cursor: pointer; }
         .search-ncm { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; }
+
+        /* Estilos Novos: Cadastro e Backup */
+        .cadastro-prod { background: #f1f2f6; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end; }
+        .cadastro-prod input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .backup-controls { margin-top: 20px; display: flex; gap: 10px; }
+        .btn-backup { background: #8e44ad; color: white; font-size: 12px; padding: 10px; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #preview-cupom, #preview-cupom * { visibility: visible; }
+            #preview-cupom { position: absolute; left: 0; top: 0; width: 80mm; box-shadow: none; margin: 0; padding: 0; }
+            .btn-voltar, .api-config, .editor, .btn, .preview-area > button, .modal { display: none !important; }
+        }
     </style>
 </head>
 <body>
 
     <div id="modalNCM" class="modal">
         <div class="modal-content">
-            <h3>Lista Geral de NCM</h3>
-            <input type="text" class="search-ncm" id="searchNCM" placeholder="Filtrar..." onkeyup="filterNCM()">
+            <h3>Gerenciar Produtos e NCM</h3>
+            
+            <div class="cadastro-prod">
+                <div class="form-group"><label>PRODUTO</label><input type="text" id="newProdNome" placeholder="Ex: Arroz 5kg"></div>
+                <div class="form-group"><label>NCM</label><input type="text" id="newProdNcm" placeholder="Ex: 10063021"></div>
+                <button class="btn btn-add" onclick="cadastrarProduto()">SALVAR PRODUTO</button>
+            </div>
+
+            <input type="text" class="search-ncm" id="searchNCM" placeholder="Filtrar por nome ou código..." onkeyup="filterNCM()">
             <table class="ncm-list-table" id="ncmTable">
-                <thead><tr><th>NCM</th><th>DESCRIÇÃO</th></tr></thead>
-                <tbody>
-                    <tr onclick="selectNCM('10063021')"><td>10063021</td><td>Arroz Polido</td></tr>
-                    <tr onclick="selectNCM('22021000')"><td>22021000</td><td>Refrigerantes</td></tr>
-                    <tr onclick="selectNCM('22072019')"><td>22072019</td><td>Álcool Etílico</td></tr>
-                    <tr onclick="selectNCM('85171300')"><td>85171300</td><td>Smartphones</td></tr>
-                </tbody>
+                <thead><tr><th>NCM</th><th>DESCRIÇÃO</th><th>AÇÃO</th></tr></thead>
+                <tbody id="ncmTableBody">
+                    </tbody>
             </table>
+            <br>
             <button onclick="document.getElementById('modalNCM').style.display='none'">Fechar</button>
         </div>
     </div>
@@ -115,6 +135,12 @@
             </table>
             <button class="btn btn-add" onclick="addProductRow()">+ NOVO PRODUTO</button>
 
+            <div class="backup-controls">
+                <button class="btn btn-backup" onclick="exportarBackup()">BAIXAR BACKUP PRODUTOS</button>
+                <button class="btn btn-backup" onclick="document.getElementById('importFile').click()">IMPORTAR BACKUP</button>
+                <input type="file" id="importFile" style="display:none" onchange="importarBackup(event)">
+            </div>
+
             <div class="section-title">Dados Fiscais (Retorno SEFAZ)</div>
             <div class="grid-inputs">
                 <div class="form-group"><label>STATUS</label><input type="text" id="inStatus" value="AGUARDANDO TRANSMISSÃO" oninput="updatePreview()"></div>
@@ -159,12 +185,19 @@
                 <div class="barcode-container" style="text-align:center;"><svg id="barcode"></svg></div>
                 <div class="qrcode-container" id="qrcode" style="display:flex; justify-content:center;"></div>
             </div>
+            <button class="btn btn-print" onclick="window.print()">IMPRIMIR CUPOM (80mm)</button>
             <button class="btn" style="width:100%; margin-top:10px; background:#34495e; color:white;" onclick="baixarPDF()">SALVAR PDF</button>
         </div>
     </div>
 
     <script>
         let productCount = 0;
+        let dbProdutos = JSON.parse(localStorage.getItem('meusProdutos')) || [
+            {ncm: '10063021', nome: 'Arroz Polido'},
+            {ncm: '22021000', nome: 'Refrigerantes'},
+            {ncm: '22072019', nome: 'Álcool Etílico'},
+            {ncm: '85171300', nome: 'Smartphones'}
+        ];
 
         function addProductRow() {
             productCount++;
@@ -182,11 +215,91 @@
             updatePreview();
         }
 
-        function selectNCM(valor) {
-            const inputs = document.querySelectorAll('.p-ncm');
-            if(inputs.length > 0) inputs[inputs.length - 1].value = valor;
+        function filterNCM() {
+            let input = document.getElementById('searchNCM');
+            let filter = input.value.toUpperCase();
+            let table = document.getElementById('ncmTable');
+            let tr = table.getElementsByTagName('tr');
+            for (let i = 1; i < tr.length; i++) {
+                let td = tr[i].getElementsByTagName('td');
+                if (td.length > 0) {
+                    let text = td[0].innerText + td[1].innerText;
+                    tr[i].style.display = text.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            }
+        }
+
+        function cadastrarProduto() {
+            const nome = document.getElementById('newProdNome').value;
+            const ncm = document.getElementById('newProdNcm').value;
+            if(!nome || !ncm) return alert("Preencha nome e NCM!");
+            
+            dbProdutos.push({ncm: ncm, nome: nome});
+            localStorage.setItem('meusProdutos', JSON.stringify(dbProdutos));
+            renderTabelaNCM();
+            document.getElementById('newProdNome').value = '';
+            document.getElementById('newProdNcm').value = '';
+        }
+
+        function renderTabelaNCM() {
+            const tbody = document.getElementById('ncmTableBody');
+            tbody.innerHTML = '';
+            dbProdutos.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td onclick="selectNCM('${item.ncm}', '${item.nome}')">${item.ncm}</td>
+                        <td onclick="selectNCM('${item.ncm}', '${item.nome}')">${item.nome}</td>
+                        <td><button onclick="removerProduto(${index})" style="color:red">X</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function removerProduto(index) {
+            if(confirm("Excluir este produto?")) {
+                dbProdutos.splice(index, 1);
+                localStorage.setItem('meusProdutos', JSON.stringify(dbProdutos));
+                renderTabelaNCM();
+            }
+        }
+
+        function selectNCM(ncm, nome) {
+            const rows = document.querySelectorAll('.product-row');
+            if(rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                lastRow.querySelector('.p-ncm').value = ncm;
+                lastRow.querySelector('.p-desc').value = nome;
+            }
             document.getElementById('modalNCM').style.display = 'none';
             updatePreview();
+        }
+
+        function exportarBackup() {
+            const data = JSON.stringify(dbProdutos);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'backup_produtos.json';
+            a.click();
+        }
+
+        function importarBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(Array.isArray(imported)) {
+                        dbProdutos = imported;
+                        localStorage.setItem('meusProdutos', JSON.stringify(dbProdutos));
+                        renderTabelaNCM();
+                        alert("Backup importado com sucesso!");
+                    }
+                } catch(err) { alert("Arquivo inválido!"); }
+            };
+            reader.readAsText(file);
         }
 
         function updatePreview() {
@@ -223,7 +336,6 @@
             const btn = document.querySelector('.btn-emitir');
             btn.innerText = "PROCESSANDO..."; btn.disabled = true;
 
-            // Coleta itens para o JSON oficial
             const itens = [];
             document.querySelectorAll('.product-row').forEach(row => {
                 itens.push({
@@ -244,7 +356,6 @@
             };
 
             try {
-                // Envia para o Google Apps Script (Sua Planilha + Integração API)
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
                     body: JSON.stringify(dadosVenda)
@@ -278,8 +389,9 @@
             html2pdf().from(document.getElementById('preview-cupom')).save();
         }
 
+        // Inicialização
+        renderTabelaNCM();
         addProductRow();
     </script>
 </body>
 </html>
-
