@@ -45,13 +45,27 @@
         .btn-add { background: #3498db; color: white; padding: 8px 15px; font-size: 12px; }
 
         @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .preview-area { order: -1; } }
+
+        .btn-voltar {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            align-self: flex-start;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
     <div class="main-grid">
-        <button class="btn-voltar" style="width:100%; margin:0" onclick="window.location.reload()">VOLTAR</button>
         <div class="api-config">
+            <button class="btn-voltar" style="width:100%; margin:0" onclick="window.location.reload()">VOLTAR</button>
             <div><strong>MODO:</strong><br>
                 <select id="apiMode">
                     <option value="producao">PRODUÇÃO (VALOR FISCAL)</option>
