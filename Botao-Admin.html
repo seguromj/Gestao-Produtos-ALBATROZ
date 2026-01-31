@@ -189,6 +189,20 @@
         }
         .insta-hist-btns { display: flex; gap: 8px; }
         .btn-icon { background: none; border: none; cursor: pointer; font-size: 14px; }
+
+        .btn-voltar {
+            background: #222;
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            align-self: flex-start;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -296,12 +310,13 @@
 
     <div id="tela-bloqueio">
         <div class="auth-container">
-            <div class="auth-logo">Spook Ice</div>
+            <div class="auth-logo">ALBATROZ</div>
             <div class="form-group">
                 <label>Chave de Acesso Admin</label>
                 <input type="password" id="senha-acesso" onkeydown="if(event.key==='Enter') verificarAcesso()">
             </div>
             <button class="btn btn-save" onclick="verificarAcesso()">LIBERAR PAINEL</button>
+            <a href="index.html"><button class="btn-voltar">← VOLTAR</button></a>
         </div>
     </div>
 
