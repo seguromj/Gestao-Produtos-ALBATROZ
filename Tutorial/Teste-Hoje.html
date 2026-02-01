@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Passo a Passo - FocusNFe</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --accent-color: #28a745;
+            --warning-color: #f39c12;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: #333;
+            margin: 0; padding: 0;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Barra de Configuração */
+        .config-header {
+            background: #2c3e50;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            /* position: sticky; <-- Removido para não ser fixo */
+            /* top: 10px;      <-- Removido */
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .config-grid input, .config-grid select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            margin-top: 5px;
+        }
+
+        .btn-save {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Seções de Instrução */
+        .step-card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--primary-color);
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            display: inline-block;
+            text-align: center;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border-left: 5px solid #ffeeba;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .code-snippet {
+            background: #eee;
+            padding: 2px 5px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        h2 { margin-top: 0; color: var(--primary-color); }
+        h3 { color: #555; margin-bottom: 10px; }
+        
+        /* Estilo para o nome da empresa */
+        .company-name {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <span class="company-name">ALBATROZ</span>
+    <h1>Guia de Integração Fiscal</h1>
+    <p>Siga a ordem cronológica para configurar seu emissor.</p>
+</header>
+
+<div class="container">
+
+    <div class="config-header">
+        <h3 style="color:white; margin:0 0 10px 0;">Em nosso sistema, você tem esses campos no Emitir Notas Fiscas</h3>
+        <div class="config-grid">
+            <div>
+                <label>Ambiente</label>
+                <select id="apiMode">
+                    <option value="homologacao">Homologação (Testes)</option>
+                    <option value="producao">Produção (Real)</option>
+                </select>
+            </div>
+            <div>
+                <label>Token FocusNFe</label>
+                <input type="text" id="apiToken" placeholder="Cole o Token">
+            </div>
+            <div>
+                <label>URL do Script</label>
+                <input type="text" id="scriptUrl" placeholder="https://script.google.com/...">
+            </div>
+            <button class="btn-save" onclick="saveSettings()">SALVAR</button>
+        </div>
+    </div>
+
+    <div class="step-card">
+        <h2><span class="step-number">1</span> Criar Conta na FocusNFe</h2>
+        <p>A <strong>FocusNFe</strong> é uma plataforma que funciona como um "tradutor" entre o seu sistema e o Governo (SEFAZ). Sem ela, enviar uma nota fiscal seria extremamente difícil.</p>
+        <ol>
+            <li><strong>Acesse o site:</strong> Vá para <a href="https://focusnfe.com.br" target="_blank">focusnfe.com.br</a>.</li>
+            <li><strong>Cadastre-se:</strong> Clique no botão de cadastro e preencha as informações da sua empresa. Você precisará do <strong>CNPJ</strong> e da <strong>Inscrição Estadual</strong> (o número que permite sua empresa vender produtos).</li>
+            <li><strong>Acesse o Painel:</strong> Após criar a conta e confirmar seu e-mail, você entrará em um painel de controle. É aqui que você gerencia quem pode emitir notas e onde você encontra as chaves (tokens) para o sistema funcionar.</li>
+            <li><strong>Configuração Inicial:</strong> No menu lateral, procure por "Empresas". Se sua empresa ainda não estiver lá, clique em "Nova Empresa" e preencha os dados básicos.</li>
+        </ol>
+    </div>
+
+    <div class="step-card" style="border-top-color: var(--warning-color);">
+        <h2><span class="step-number">2</span> Cadastrar o Certificado Digital A1</h2>
+        <p>Pense no <strong>Certificado Digital A1</strong> como o "RG eletrônico" da sua empresa. Ele prova para o Governo que é realmente você quem está emitindo a nota fiscal.</p>
+        
+        <div class="alert-box">
+            <b>O que é o A1?</b> É um pequeno arquivo digital que você compra em empresas certificadoras. Ele tem validade de 1 ano e geralmente termina com a extensão <span class="code-snippet">.pfx</span> ou <span class="code-snippet">.p12</span>. <strong>Importante:</strong> Sem este arquivo instalado no painel da FocusNFe, você não consegue emitir notas reais.
+        </div>
+
+        <h3>Como colocar no sistema:</h3>
+        <ol>
+            <li><strong>Localize o Menu:</strong> No painel da FocusNFe, clique em <b>Empresas</b> no menu lateral.</li>
+            <li><strong>Editar:</strong> Encontre o nome da sua empresa na lista e clique no botão <b>Editar</b>.</li>
+            <li><strong>Envio do Arquivo:</strong> Role a página até encontrar a aba ou campo chamado <b>Certificado Digital</b>.</li>
+            <li><strong>Upload:</strong> Clique no botão para selecionar o arquivo e escolha o certificado A1 que está salvo no seu computador.</li>
+            <li><strong>Senha:</strong> Digite a <b>senha exata</b> do certificado (aquela que você definiu no momento da compra).</li>
+            <li><strong>Salvar:</strong> Clique no botão <b>Salvar</b> ao final da página. Se a senha estiver correta, o sistema confirmará que o certificado está pronto.</li>
+        </ol>
+    </div>
+
+    <div class="step-card">
+        <h2><span class="step-number">3</span> Pegar seus Tokens de Acesso</h2>
+        <p>Os <strong>Tokens</strong> são como senhas secretas que permitem que a sua Planilha Google "converse" com a FocusNFe com segurança.</p>
+        <ul>
+            <li>No painel da FocusNFe, dentro das configurações da sua empresa, você verá dois códigos muito longos feitos de letras e números:</li>
+            <li><strong>Token de Homologação:</strong> Serve para fazer testes. As notas emitidas aqui <b>não têm valor legal</b> e servem apenas para ver se o sistema está funcionando.</li>
+            <li><strong>Token de Produção:</strong> Serve para o dia a dia. As notas emitidas aqui <b>são reais e valem para o Governo</b>.</li>
+            <li><strong>Ação:</strong> Copie o código (token) que você deseja usar e cole no campo azul de <b>"Token FocusNFe"</b> no topo desta página.</li>
+        </ul>
+    </div>
+
+    <div class="step-card" style="border-top-color: #673ab7;">
+        <h2><span class="step-number">4</span> Configurar o Google Apps Script da Planilha</h2>
+        <p>O <strong>Google Apps Script</strong> é o "cérebro" oculto da sua planilha. É ele quem recebe o comando de venda e envia para a FocusNFe processar a nota.</p>
+        
+        <ol>
+            <li><strong>Abrir o Editor:</strong> Com a sua Planilha Google aberta, clique no menu superior em <b>Extensões</b> e escolha a opção <b>Apps Script</b>. Uma nova aba branca com códigos vai abrir.</li>
+            <li><strong>Limpar e Colar:</strong> Se houver qualquer texto escrito lá (como <code>function myFunction() {...}</code>), apague tudo. Deixe a página totalmente em branco e cole o código completo que foi fornecido a você.</li>
+            <li><strong>Salvar o Projeto:</strong> Clique no ícone do disquete (ícone de salvar) no topo e dê um nome qualquer, como "Emissor Albatroz".</li>
+            <li><strong>Implantar (Colocar para rodar):</strong> 
+                <ul>
+                    <li>Clique no botão azul grande escrito <b>Implantar</b> no canto superior direito e selecione <b>Nova implantação</b>.</li>
+                    <li>Clique no desenho da engrenagem e escolha <b>App da Web</b>.</li>
+                    <li>Em "Executar como", deixe selecionado <b>"Eu"</b>.</li>
+                    <li>Em "Quem pode acessar", mude para a opção <b>Qualquer pessoa</b> (isso é vital para que o sistema consiga enviar dados).</li>
+                    <li>Clique no botão azul <b>Implantar</b>.</li>
+                </ul>
+            </li>
+            <li><strong>Autorização:</strong> O Google vai mostrar uma janela pedindo permissão. Clique em "Rever permissões", escolha sua conta, clique em "Advanced" (Avançado) no canto inferior e depois em "Go to [Nome do seu projeto] (unsafe)". Por fim, clique em "Allow" (Permitir).</li>
+            <li><strong>Copiar a URL:</strong> Após carregar, o Google vai te dar um link longo chamado "URL do app da Web" que termina em <span class="code-snippet">/exec</span>. Copie este link e cole no campo <b>"URL do Script"</b> no topo desta página.</li>
+        </ol>
+    </div>
+
+</div>
+
+<script>
+    window.onload = function() {
+        document.getElementById('apiMode').value = localStorage.getItem('apiMode') || 'homologacao';
+        document.getElementById('apiToken').value = localStorage.getItem('apiToken') || '';
+        document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl') || '';
+    };
+
+    function saveSettings() {
+        localStorage.setItem('apiMode', document.getElementById('apiMode').value);
+        localStorage.setItem('apiToken', document.getElementById('apiToken').value);
+        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
+        alert("Configurações salvas!");
+    }
+</script>
+
+</body>
+</html>
