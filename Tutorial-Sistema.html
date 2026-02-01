@@ -102,7 +102,7 @@
         .btn-youtube:active,
         .button1:active,
         .button2:active {
-            transform: scale(0.60);
+            transform: scale(0.95); /* Ajustado de 0.60 para 0.95 para ficar mais natural */
         }
 
         hr {
@@ -112,59 +112,52 @@
             margin: 30px 0;
         }
 
-        /* Card do YouTube transformado em área totalmente clicável */
+        /* Card do YouTube formatado como link direto */
         .btn-youtube {
             background: rgba(255, 255, 255, 0.03);
+            text-decoration: none; /* Remove underline do link */
             color: var(--text);
             border: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 12px;
-            padding: 10px 15px;
+            padding: 12px 15px;
             backdrop-filter: blur(5px);
-            border-radius: 10px;
+            border-radius: 12px;
             width: 100%;
             box-sizing: border-box;
             cursor: pointer;
             transition: all 0.2s ease;
-            /* Garante que nada interno bloqueie o clique */
-            position: relative;
         }
 
         .btn-youtube:hover {
             background: rgba(255, 255, 255, 0.08);
-            border-color: var(--youtube-red);
-        }
-
-        /* Impede que os itens internos interfiram no clique do card */
-        .youtube-info,
-        .visualizar-tag,
-        .btn-youtube * {
-            pointer-events: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
         }
 
         .youtube-info {
             display: flex;
             align-items: center;
-            gap: 10px;
-            flex: 1;
+            gap: 12px;
         }
 
         .btn-youtube img {
-            width: 28px;
+            width: 32px;
             filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.5));
         }
 
         .btn-youtube p {
             margin: 0;
             line-height: 1.2;
+            font-weight: 500;
         }
 
         .visualizar-tag {
             background: var(--youtube-red);
-            padding: 4px 10px;
-            border-radius: 16px 5px 16px 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 10px;
             font-weight: bold;
             text-transform: uppercase;
@@ -189,15 +182,15 @@
             flex-shrink: 0;
             font-size: 14px;
             font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <a href="index.html">
-            <button class="btn-voltar">← VOLTAR</button>
-        </a>
+        <a href="index.html" class="btn-voltar">← VOLTAR</a>
 
         <div class="header-section">
             <h1>Links</h1>
@@ -221,48 +214,37 @@
         
         <div class="youtube-list">
 
-            <div class="btn-youtube">
-                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
-                    <div class="youtube-info">
-                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                        <p style="font-size: 10px;">Como Cadasttar um produto</p>
-                    </div>
-                    <div class="visualizar-tag">Visualizar</div>
-                </a>
-            </div>
+            <a href="Tutorial/Tutorial-Cadastrar-Produto.html" class="btn-youtube">
+                <div class="youtube-info">
+                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                    <p style="font-size: 11px;">Como Cadastrar um produto</p>
+                </div>
+                <div class="visualizar-tag">Visualizar</div>
+            </a>
 
-            <div class="btn-youtube">
-                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
-                    <div class="youtube-info">
-                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                        <p style="font-size: 10px;">Escanear Produto</p>
-                    </div>
-                    <div class="visualizar-tag">Visualizar</div>
-                </a>
-            </div>
+            <a href="Tutorial/Tutorial-Escanear-Produto.html" class="btn-youtube">
+                <div class="youtube-info">
+                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                    <p style="font-size: 11px;">Escanear Produto</p>
+                </div>
+                <div class="visualizar-tag">Visualizar</div>
+            </a>
 
-            <div class="btn-youtube">
-                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
-                    <div class="youtube-info">
-                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                        <p style="font-size: 10px;">Histórico de Vendas</p>
-                    </div>
-                    <div class="visualizar-tag">Visualizar</div>
-                </a>
-            </div>
+            <a href="Tutorial/Tutorial-Historico.html" class="btn-youtube">
+                <div class="youtube-info">
+                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                    <p style="font-size: 11px;">Histórico de Vendas</p>
+                </div>
+                <div class="visualizar-tag">Visualizar</div>
+            </a>
 
-            <div class="btn-youtube">
-                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
-                    <div class="youtube-info">
-                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                        <p style="font-size: 10px;">Nota Fiscal</p>
-                    </div>
-                    <div class="visualizar-tag">Visualizar</div>
-                </a>
-            </div>
-
-            
-            
+            <a href="Tutorial/Tutorial-Nota-Fiscal.html" class="btn-youtube">
+                <div class="youtube-info">
+                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                    <p style="font-size: 11px;">Nota Fiscal</p>
+                </div>
+                <div class="visualizar-tag">Visualizar</div>
+            </a>
 
         </div>
     </div>
