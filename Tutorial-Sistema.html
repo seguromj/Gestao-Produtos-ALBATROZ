@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -11,7 +10,7 @@
             /* Cores Futuristas */
             --primary: #00d2ff;
             --secondary: #3a7bd5;
-            --bg: #0f172a; 
+            --bg: #0f172a;
             --card-bg: rgba(255, 255, 255, 0.05);
             --text: #f8fafc;
             --youtube-red: #FF0000;
@@ -64,7 +63,7 @@
         }
 
         .url-text {
-            font-size: 0.40rem; 
+            font-size: 0.40rem;
             color: var(--primary);
             word-break: break-all;
             display: block;
@@ -85,7 +84,7 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
-    
+
         .button2 {
             width: 100%;
             padding: 14px;
@@ -100,8 +99,10 @@
         }
 
         /* Efeito de encolher aplicado a qualquer botão ou card clicável */
-        .btn-youtube:active, .button1:active, .button2:active {
-            transform: scale(0.60); 
+        .btn-youtube:active,
+        .button1:active,
+        .button2:active {
+            transform: scale(0.60);
         }
 
         hr {
@@ -137,7 +138,9 @@
         }
 
         /* Impede que os itens internos interfiram no clique do card */
-        .youtube-info, .visualizar-tag, .btn-youtube * {
+        .youtube-info,
+        .visualizar-tag,
+        .btn-youtube * {
             pointer-events: none;
         }
 
@@ -173,8 +176,8 @@
             margin-top: 20px;
             width: 100%;
         }
-        
-     .btn-voltar {
+
+        .btn-voltar {
             background: #222;
             color: #fff;
             border: 1px solid #444;
@@ -187,16 +190,18 @@
             font-size: 14px;
             font-weight: bold;
         }
-        
     </style>
 </head>
 <body>
 
     <div class="container">
-         <a href="index.html"><button class="btn-voltar">← VOLTAR</button></a>
+        <a href="index.html">
+            <button class="btn-voltar">← VOLTAR</button>
+        </a>
+
         <div class="header-section">
             <h1>Links</h1>
-            
+
             <div class="link-box">
                 <span class="link-title">↘ Link do PDV ↙</span>
                 <span class="url-text" id="linkPdv">https://seguromj.github.io/Gestao-Produtos-ALBATROZ/</span>
@@ -209,57 +214,61 @@
                 <button class="button2" onclick="copiarTexto('linkCardapio')">Copiar Link Cardápio Web</button>
             </div>
         </div>
-        
+
         <hr>
 
         <h1 style="text-align: center;">Tutoriais</h1>
+        
         <div class="youtube-list">
-            
+
             <div class="btn-youtube">
-                <div class="youtube-info">
-                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                    <p style="font-size: 10px;">Como Cadasttar um produto</p>
-                </div>
-                <div class="visualizar-tag">Visualizar</div>
+                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
+                    <div class="youtube-info">
+                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                        <p style="font-size: 10px;">Como Cadasttar um produto</p>
+                    </div>
+                    <div class="visualizar-tag">Visualizar</div>
+                </a>
             </div>
 
-            <div class="btn-youtube" onclick="window.open('https://www.youtube.com/', '_blank')">
-                <div class="youtube-info">
-                    <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
-                    <p style="font-size: 10px;">Cardápio teste 2</p>
-                </div>
-                <div class="visualizar-tag">Visualizar</div>
+            <div class="btn-youtube">
+                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
+                    <div class="youtube-info">
+                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                        <p style="font-size: 10px;">Escanear Produto</p>
+                    </div>
+                    <div class="visualizar-tag">Visualizar</div>
+                </a>
             </div>
 
-            <div class="btn-youtube" onclick="window.open('https://www.youtube.com/', '_blank')">
-                <div class="youtube-info">
-                    <img src="" alt="YouTube">
-                    <p style="font-size: 10px;">Cardápio teste 3</p>
-                </div>
-                <div class="visualizar-tag">Visualizar</div>
+            <div class="btn-youtube">
+                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
+                    <div class="youtube-info">
+                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                        <p style="font-size: 10px;">Histórico de Vendas</p>
+                    </div>
+                    <div class="visualizar-tag">Visualizar</div>
+                </a>
             </div>
 
-            <div class="btn-youtube" onclick="window.open('https://www.youtube.com/', '_blank')">
-                <div class="youtube-info">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" alt="YouTube">
-                    <p style="font-size: 10px;">Cardápio teste 4</p>
-                </div>
-                <div class="visualizar-tag">Visualizar</div>
+            <div class="btn-youtube">
+                <a href="Tutorial/Tutorial-Cadastrar-Produto.html">
+                    <div class="youtube-info">
+                        <img src="https://i.ibb.co/fV5z6XG8/1000136521.png" alt="YouTube">
+                        <p style="font-size: 10px;">Nota Fiscal</p>
+                    </div>
+                    <div class="visualizar-tag">Visualizar</div>
+                </a>
             </div>
+
             
-             <div class="btn-youtube" onclick="window.open('https://www.youtube.com/', '_blank')">
-                <div class="youtube-info">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg" alt="YouTube">
-                    <p style="font-size: 10px;">Cardápio teste 5</p>
-                </div>
-                <div class="visualizar-tag">Visualizar</div>
-            </div>
+            
 
         </div>
     </div>
     <br><br><br>
 
-    <script>   
+    <script>
         function copiarTexto(idElemento) {
             const texto = document.getElementById(idElemento).innerText;
             navigator.clipboard.writeText(texto).then(() => {
