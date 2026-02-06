@@ -1,7 +1,7 @@
 
 {
-  "name": "Sistema NEXUS",
-  "short_name": "NEXUS",
+  "name": "Sistema BITCAIXA",
+  "short_name": "BITCAIXA",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",
