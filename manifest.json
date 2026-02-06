@@ -1,7 +1,7 @@
 
 {
-  "name": "Sistema Albatroz",
-  "short_name": "Albatroz",
+  "name": "Sistema NEXUS",
+  "short_name": "NEXUS",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#121212",
