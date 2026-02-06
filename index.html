@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -368,7 +369,7 @@
             gap: 2px;
         }
         .baixa-input {
-            width: 35px;
+            width: 55px;
             font-size: 11px;
             padding: 2px;
             text-align: center;
@@ -419,6 +420,31 @@
             color: white;
             font-size: 18px;
             box-sizing: border-box;
+        }
+
+        /* ESTILO PARA O CAMPO DE ID MANUAL */
+        .container-id-manual {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+        }
+        .input-id-manual {
+            flex: 1;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--warning);
+            background: #111;
+            color: var(--warning);
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn-id-manual {
+            background: var(--warning);
+            border: none;
+            border-radius: 6px;
+            padding: 0 15px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .texto-troco {
@@ -935,8 +961,8 @@
         <div class="layout-scan-pc">
             <div class="camera-lado-esquerdo">
                 <div class="config-pdv-topo">
-                    <label>QUANTIDADE PADRÃO:</label>
-                    <input type="number" id="qtd-multiplicadora" value="1" min="1" onchange="if(this.value < 1) this.value = 1;">
+                    <label>QUANTIDADE/PESO PADRÃO:</label>
+                    <input type="number" id="qtd-multiplicadora" value="1" min="0" step="0.001" onchange="if(this.value < 0) this.value = 0;">
                     <small style="color: #666; font-size: 10px;">(Ao escanear)</small>
                 </div>
                 <div class="camera-controls">
@@ -958,6 +984,12 @@
                             <option value="Cartão">💳 Cartão</option>
                         </select>
                         <input type="number" id="valor-recebido" class="input-pagamento" placeholder="Valor recebido" oninput="calcularTroco()">
+                        
+                        <div class="container-id-manual">
+                            <input type="text" id="id-manual-pdv" class="input-id-manual" placeholder="ID ou Código de Barra" onkeydown="if(event.key==='Enter') processarIdManual()">
+                            <button class="btn-id-manual" onclick="processarIdManual()">🔍</button>
+                        </div>
+
                         <div id="texto-troco" class="texto-troco">Troco: R$ 0,00</div>
                     </div>
                 </div>
@@ -980,7 +1012,7 @@
             <input type="text" id="p-img" placeholder="Link da Imagem">
             <a style="text-decoration: none;" class="btn-voltar" href="Hospedar-IMGs.html">Hospedar Imagem </a>
             <input type="number" id="p-valor" placeholder="Valor de Venda (R$)">
-            <input type="number" id="p-qtd" placeholder="Quantidade em Estoque">
+            <input type="number" id="p-qtd" placeholder="Quantidade em Estoque" step="0.001">
             <button id="btn-salvar-manual" class="btn-main btn-green" style="padding:15px; width: 100%;" onclick="salvarProduto()">SALVAR NO CATÁLOGO</button>
             <div class="container-backup">
                 <button class="btn-backup" id="btn-exportar-manual" onclick="exportarDados()">📤 EXPORTAR BACKUP</button>
@@ -1415,7 +1447,7 @@
             // Verifica se o modal de escaneamento está aberto
             if (document.getElementById('modalSist').style.display === 'flex') {
                 // Se o foco estiver em um input de valor ou quantidade, deixamos o sistema agir normalmente
-                if (document.activeElement.id === 'valor-recebido' || document.activeElement.className.includes('baixa-input') || document.activeElement.id === 'qtd-multiplicadora') return;
+                if (document.activeElement.id === 'valor-recebido' || document.activeElement.className.includes('baixa-input') || document.activeElement.id === 'qtd-multiplicadora' || document.activeElement.id === 'id-manual-pdv') return;
                 
                 if (e.key === "Enter") {
                     if (barcodeBuffer.length > 0) {
@@ -1467,7 +1499,7 @@
                 if (matchesBusca) {
                     const div = document.createElement('div');
                     div.className = 'card-disponivel';
-                    if (parseInt(p.qtd) <= 5) div.classList.add('alerta-estoque');
+                    if (parseFloat(p.qtd) <= 5) div.classList.add('alerta-estoque');
                     div.innerHTML = `
                         <span style="font-weight:bold">${p.nome || 'Sem Nome'}</span>
                         <span style="color:var(--warning)">Qtd: ${p.qtd}</span>
@@ -1536,14 +1568,14 @@
             const produtoEncontrado = produtos.find(p => p.id === id);
             
             // PEGA A QUANTIDADE MULTIPLICADORA DO INPUT NO TOPO
-            const qtdPadrao = parseInt(document.getElementById('qtd-multiplicadora').value) || 1;
+            const qtdPadrao = parseFloat(document.getElementById('qtd-multiplicadora').value) || 1;
             
             const itemObj = {
                 id: id,
                 nome: produtoEncontrado ? (produtoEncontrado.nome || "Produto Localizado") : "ID Não Cadastrado",
                 img: produtoEncontrado ? produtoEncontrado.img : "https://via.placeholder.com/50",
                 valor: produtoEncontrado ? produtoEncontrado.valor : 0,
-                qtdBaixa: qtdPadrao, // Usa a quantidade definida no topo
+                qtdBaixa: qtdPadrao, // Usa a quantidade definida no topo (suporta decimais)
                 timestamp: new Date().getTime()
             };
             historico.unshift(itemObj);
@@ -1558,15 +1590,32 @@
             }
         }
 
+        // NOVO: PROCESSAR ID DIGITADO MANUALMENTE NO PDV
+        function processarIdManual() {
+            const campo = document.getElementById('id-manual-pdv');
+            const id = campo.value.trim();
+            if (id === "") return;
+
+            const existe = produtos.some(p => p.id === id);
+            if (existe) {
+                document.getElementById('beep').play();
+                adicionarNaLista(id);
+                campo.value = "";
+                campo.focus();
+            } else {
+                mostrarAvisoErro();
+            }
+        }
+
         // MODIFICAÇÃO: Salvando a quantidade no array historico para não resetar ao bipar
         function atualizarQtdNoHistorico(index, valor) {
-            historico[index].qtdBaixa = parseInt(valor) || 1;
+            historico[index].qtdBaixa = parseFloat(valor) || 0;
             localStorage.setItem('meu_historico', JSON.stringify(historico));
             
             // Recalcula o total sem renderizar tudo novamente (para evitar perda de foco)
             let soma = 0;
             historico.forEach(item => {
-                soma += (parseFloat(item.valor) || 0) * (item.qtdBaixa || 1);
+                soma += (parseFloat(item.valor) || 0) * (item.qtdBaixa || 0);
             });
             valorTotalVenda = soma;
             document.getElementById('valor-total').innerText = `Total: R$ ${soma.toFixed(2)}`;
@@ -1583,7 +1632,7 @@
 
             historico.forEach((item, index) => {
                 const valorItem = parseFloat(item.valor) || 0;
-                const qtd = item.qtdBaixa || 1;
+                const qtd = item.qtdBaixa || 0;
                 somaTotal += (valorItem * qtd);
                 
                 const div = document.createElement('div');
@@ -1598,7 +1647,7 @@
                     </div>
                     <div style="display:flex; align-items:center; gap:5px">
                         <div class="baixa-container">
-                            <input type="number" class="baixa-input" value="${qtd}" oninput="atualizarQtdNoHistorico(${index}, this.value)">
+                            <input type="number" step="0.001" class="baixa-input" value="${qtd}" oninput="atualizarQtdNoHistorico(${index}, this.value)">
                             <button class="btn-delete" style="background:var(--warning); color:black;" onclick="darBaixa('${item.id}', ${index})">BAIXA</button>
                         </div>
                         <button class="btn-delete" onclick="removerItem(${index})">X</button>
@@ -1648,7 +1697,7 @@
                 id: idDigitado,
                 img: document.getElementById('p-img').value || "https://via.placeholder.com/150",
                 valor: document.getElementById('p-valor').value,
-                qtd: parseInt(document.getElementById('p-qtd').value) || 0
+                qtd: parseFloat(document.getElementById('p-qtd').value) || 0
             };
             if(index === "") produtos.push(p);
             else { produtos[index] = p; document.getElementById('edit-index').value = ""; }
@@ -1698,7 +1747,7 @@
         }
 
         function darBaixa(id, histIndex) {
-            const qtdBaixa = historico[histIndex].qtdBaixa || 1;
+            const qtdBaixa = parseFloat(historico[histIndex].qtdBaixa) || 0;
             const pIndex = produtos.findIndex(p => p.id === id);
             const metodo = document.getElementById('metodo-pagamento').value;
             if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
@@ -1731,7 +1780,7 @@
             let totalGeralVenda = 0;
 
             historico.forEach((item, index) => {
-                const qtdBaixa = item.qtdBaixa || 1;
+                const qtdBaixa = parseFloat(item.qtdBaixa) || 0;
                 const pIndex = produtos.findIndex(p => p.id === item.id);
                 if(pIndex !== -1 && produtos[pIndex].qtd >= qtdBaixa) {
                     produtos[pIndex].qtd -= qtdBaixa;
@@ -2188,12 +2237,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
